@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
@@ -21,9 +20,28 @@ import {
   AlertCircle,
   CheckCircle,
   Menu,
-  X
+  X,
+  Plus,
+  EyeOff,
+  Eye,
+  Flag,
+  ShieldAlert,
+  Filter,
+  Calendar
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { 
+  Table, 
+  TableBody, 
+  TableCaption, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 // Sample data for users
 const usersData = [
@@ -75,14 +93,41 @@ const notificationsData = [
   { id: 4, type: "alert", message: "Atenção: 5 usuários não acessam há mais de 30 dias", time: "1 dia atrás", read: true }
 ];
 
+// Sample activities data
+const activitiesData = [
+  { id: 1, title: "Vocabulário - Cores", type: "Lição", category: "Vocabulário", level: "A1", status: "active", createdAt: "15/05/2023" },
+  { id: 2, title: "Present Continuous", type: "Exercício", category: "Gramática", level: "A2", status: "active", createdAt: "20/05/2023" },
+  { id: 3, title: "Animais Domésticos", type: "Flashcards", category: "Vocabulário", level: "A1", status: "inactive", createdAt: "25/05/2023" },
+  { id: 4, title: "Preposições de Lugar", type: "Quiz", category: "Gramática", level: "B1", status: "active", createdAt: "30/05/2023" },
+  { id: 5, title: "Conversação - Restaurante", type: "Diálogo", category: "Conversação", level: "B2", status: "active", createdAt: "02/06/2023" }
+];
+
+// Sample forum posts data
+const forumPostsData = [
+  { id: 1, title: "Dúvida sobre tempos verbais", author: "Ana Oliveira", date: "10/06/2023", status: "approved", flagged: false, replies: 5 },
+  { id: 2, title: "Como praticar conversação?", author: "Carlos Santos", date: "09/06/2023", status: "approved", flagged: false, replies: 8 },
+  { id: 3, title: "Material de estudo para iniciantes", author: "Mariana Costa", date: "08/06/2023", status: "pending", flagged: false, replies: 0 },
+  { id: 4, title: "Conteúdo inapropriado", author: "Rafael Lima", date: "07/06/2023", status: "rejected", flagged: true, replies: 2 },
+  { id: 5, title: "Cronograma de estudos", author: "Juliana Martins", date: "06/06/2023", status: "approved", flagged: false, replies: 4 }
+];
+
 // Admin panel tabs
-type TabType = "dashboard" | "users" | "lessons" | "analytics" | "settings";
+type TabType = "dashboard" | "users" | "lessons" | "activities" | "forum" | "analytics" | "settings";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState<TabType>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
+  
+  // Activity management states
+  const [showActivityForm, setShowActivityForm] = useState(false);
+  const [currentActivity, setCurrentActivity] = useState<any>(null);
+  
+  // Forum management states
+  const [showPostDetails, setShowPostDetails] = useState(false);
+  const [currentPost, setCurrentPost] = useState<any>(null);
+  const [filterStatus, setFilterStatus] = useState("all");
   
   // Filter data based on search term
   const filteredUsers = usersData.filter(user => 
@@ -94,9 +139,63 @@ const Admin = () => {
     lesson.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     lesson.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const filteredActivities = activitiesData.filter(activity => 
+    activity.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    activity.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    activity.type.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredForumPosts = forumPostsData
+    .filter(post => 
+      post.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      post.author.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(post => filterStatus === "all" || post.status === filterStatus);
   
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const handleEditActivity = (activity: any) => {
+    setCurrentActivity(activity);
+    setShowActivityForm(true);
+  };
+
+  const handleDeleteActivity = (id: number) => {
+    // In a real app, this would be an API call
+    console.log(`Deleting activity with ID: ${id}`);
+    // Then update the UI accordingly
+  };
+
+  const handleToggleActivityStatus = (id: number, currentStatus: string) => {
+    // In a real app, this would be an API call
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    console.log(`Toggling activity with ID: ${id} to ${newStatus}`);
+    // Then update the UI accordingly
+  };
+
+  const handleViewPost = (post: any) => {
+    setCurrentPost(post);
+    setShowPostDetails(true);
+  };
+
+  const handleApprovePost = (id: number) => {
+    // In a real app, this would be an API call
+    console.log(`Approving post with ID: ${id}`);
+    // Then update the UI accordingly
+  };
+
+  const handleRejectPost = (id: number) => {
+    // In a real app, this would be an API call
+    console.log(`Rejecting post with ID: ${id}`);
+    // Then update the UI accordingly
+  };
+
+  const handleDeletePost = (id: number) => {
+    // In a real app, this would be an API call
+    console.log(`Deleting post with ID: ${id}`);
+    // Then update the UI accordingly
   };
   
   const renderAdminHeader = () => (
@@ -210,6 +309,26 @@ const Admin = () => {
         >
           <BookOpen className="h-5 w-5 mr-3" />
           <span>Lições</span>
+        </button>
+
+        <button
+          className={`flex items-center w-full px-3 py-2 rounded-lg transition-colors ${
+            activeTab === "activities" ? "bg-primary text-white" : "hover:bg-muted/50"
+          }`}
+          onClick={() => setActiveTab("activities")}
+        >
+          <Calendar className="h-5 w-5 mr-3" />
+          <span>Atividades</span>
+        </button>
+
+        <button
+          className={`flex items-center w-full px-3 py-2 rounded-lg transition-colors ${
+            activeTab === "forum" ? "bg-primary text-white" : "hover:bg-muted/50"
+          }`}
+          onClick={() => setActiveTab("forum")}
+        >
+          <MessageSquare className="h-5 w-5 mr-3" />
+          <span>Fórum</span>
         </button>
         
         <button
@@ -539,351 +658,4 @@ const Admin = () => {
         <CardHeader>
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
             <CardTitle>Gerenciar Lições</CardTitle>
-            <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Buscar lições..."
-                  className="pl-10 pr-4 py-2 w-full sm:w-64 border rounded-lg"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Button>
-                <FilePlus className="h-4 w-4 mr-2" />
-                Nova Lição
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-3 px-2 text-left font-medium">Título</th>
-                  <th className="py-3 px-2 text-left font-medium">Categoria</th>
-                  <th className="py-3 px-2 text-left font-medium">Nível</th>
-                  <th className="py-3 px-2 text-left font-medium">Alunos</th>
-                  <th className="py-3 px-2 text-left font-medium">Taxa de Conclusão</th>
-                  <th className="py-3 px-2 text-left font-medium">Status</th>
-                  <th className="py-3 px-2 text-left font-medium">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLessons.map(lesson => (
-                  <tr key={lesson.id} className="border-b hover:bg-muted/30">
-                    <td className="py-3 px-2">{lesson.title}</td>
-                    <td className="py-3 px-2">{lesson.category}</td>
-                    <td className="py-3 px-2">{lesson.level}</td>
-                    <td className="py-3 px-2">{lesson.students}</td>
-                    <td className="py-3 px-2">
-                      <div className="flex items-center space-x-2">
-                        <ProgressIndicator value={lesson.completion} max={100} size="sm" className="w-20" />
-                        <span className="text-sm">{lesson.completion}%</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-2">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        lesson.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {lesson.status === 'published' ? 'Publicado' : 'Rascunho'}
-                      </span>
-                    </td>
-                    <td className="py-3 px-2">
-                      <div className="flex space-x-2">
-                        <button className="p-1 hover:bg-muted rounded">
-                          <PencilLine className="h-4 w-4" />
-                        </button>
-                        <button className="p-1 hover:bg-muted rounded text-red-500">
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {filteredLessons.length === 0 && (
-            <div className="text-center py-10">
-              <p className="text-muted-foreground">Nenhuma lição encontrada para "{searchTerm}"</p>
-            </div>
-          )}
-          
-          <div className="mt-6 flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              Mostrando {filteredLessons.length} de {lessonsData.length} lições
-            </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm" disabled>Anterior</Button>
-              <Button variant="outline" size="sm" disabled>Próximo</Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-  
-  const renderAnalytics = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle>Crescimento de Usuários</CardTitle>
-            <CardDescription>Total de usuários registrados por mês</CardDescription>
-          </CardHeader>
-          <CardContent className="h-80">
-            {/* Charting would go here - using a placeholder */}
-            <div className="h-full bg-muted/20 rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground">Gráfico de crescimento de usuários</p>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="border-0 shadow-sm">
-          <CardHeader>
-            <CardTitle>Conclusão de Lições por Categoria</CardTitle>
-            <CardDescription>Total de lições concluídas por categoria</CardDescription>
-          </CardHeader>
-          <CardContent className="h-80">
-            {/* Charting would go here - using a placeholder */}
-            <div className="h-full bg-muted/20 rounded-lg flex items-center justify-center">
-              <p className="text-muted-foreground">Gráfico de conclusão de lições</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle>Métricas de Engajamento</CardTitle>
-          <CardDescription>Dados de uso e engajamento da plataforma</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-muted/30 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Média de Tempo por Sessão</p>
-              <p className="text-2xl font-bold">18 min</p>
-              <p className="text-xs text-green-500 mt-2">+2.5 min vs. último mês</p>
-            </div>
-            
-            <div className="bg-muted/30 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Taxa de Retenção</p>
-              <p className="text-2xl font-bold">68%</p>
-              <p className="text-xs text-green-500 mt-2">+5% vs. último mês</p>
-            </div>
-            
-            <div className="bg-muted/30 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Exercícios Completados</p>
-              <p className="text-2xl font-bold">12,450</p>
-              <p className="text-xs text-green-500 mt-2">+1,230 vs. último mês</p>
-            </div>
-            
-            <div className="bg-muted/30 rounded-lg p-4">
-              <p className="text-sm text-muted-foreground mb-1">Taxa de Conclusão</p>
-              <p className="text-2xl font-bold">74%</p>
-              <p className="text-xs text-green-500 mt-2">+3% vs. último mês</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle>Utilização por Dispositivo</CardTitle>
-          <CardDescription>Como os usuários acessam a plataforma</CardDescription>
-        </CardHeader>
-        <CardContent className="h-80">
-          {/* Charting would go here - using a placeholder */}
-          <div className="h-full bg-muted/20 rounded-lg flex items-center justify-center">
-            <p className="text-muted-foreground">Gráfico de utilização por dispositivo</p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-  
-  const renderSettings = () => (
-    <div className="space-y-6">
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle>Configurações Gerais</CardTitle>
-          <CardDescription>Gerenciar configurações da plataforma</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Informações da Plataforma</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Nome da Plataforma</label>
-                <input type="text" className="w-full p-2 border rounded-md" value="Fala Fácil" />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">E-mail de Contato</label>
-                <input type="email" className="w-full p-2 border rounded-md" value="contato@falafacil.com" />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">URL do Site</label>
-                <input type="url" className="w-full p-2 border rounded-md" value="https://falafacil.com" />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Idioma Padrão</label>
-                <select className="w-full p-2 border rounded-md">
-                  <option value="pt-BR">Português (Brasil)</option>
-                  <option value="en-US">English (US)</option>
-                  <option value="es">Español</option>
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Configurações de E-mail</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">E-mails de Boas-vindas</p>
-                  <p className="text-sm text-muted-foreground">Enviar e-mail automático quando um novo usuário se registra</p>
-                </div>
-                <div>
-                  <button className="w-10 h-5 bg-primary rounded-full relative">
-                    <span className="absolute right-0.5 top-0.5 bg-white rounded-full w-4 h-4"></span>
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Lembretes de Inatividade</p>
-                  <p className="text-sm text-muted-foreground">Enviar lembretes para usuários inativos após 7 dias</p>
-                </div>
-                <div>
-                  <button className="w-10 h-5 bg-muted rounded-full relative">
-                    <span className="absolute left-0.5 top-0.5 bg-white rounded-full w-4 h-4"></span>
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Notificações de Conquistas</p>
-                  <p className="text-sm text-muted-foreground">Enviar e-mail quando um usuário desbloqueia uma conquista</p>
-                </div>
-                <div>
-                  <button className="w-10 h-5 bg-primary rounded-full relative">
-                    <span className="absolute right-0.5 top-0.5 bg-white rounded-full w-4 h-4"></span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="pt-4 flex justify-end space-x-4">
-            <Button variant="outline">Cancelar</Button>
-            <Button>Salvar Alterações</Button>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle>Segurança</CardTitle>
-          <CardDescription>Configurações de segurança e acesso</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Autenticação</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Autenticação de Dois Fatores</p>
-                  <p className="text-sm text-muted-foreground">Exigir autenticação de dois fatores para administradores</p>
-                </div>
-                <div>
-                  <button className="w-10 h-5 bg-primary rounded-full relative">
-                    <span className="absolute right-0.5 top-0.5 bg-white rounded-full w-4 h-4"></span>
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Expiração de Sessão</p>
-                  <p className="text-sm text-muted-foreground">Desconectar usuários após período de inatividade</p>
-                </div>
-                <div>
-                  <select className="p-1 border rounded">
-                    <option value="30">30 minutos</option>
-                    <option value="60">1 hora</option>
-                    <option value="120">2 horas</option>
-                    <option value="240">4 horas</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Backups e Restauração</h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Backups Automáticos</p>
-                  <p className="text-sm text-muted-foreground">Realizar backups automáticos do banco de dados</p>
-                </div>
-                <div>
-                  <select className="p-1 border rounded">
-                    <option value="daily">Diariamente</option>
-                    <option value="weekly">Semanalmente</option>
-                    <option value="monthly">Mensalmente</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="flex items-center">
-                <Button variant="outline">Realizar Backup Manual</Button>
-                <Button variant="subtle" className="ml-4">Restaurar Backup</Button>
-              </div>
-            </div>
-          </div>
-          
-          <div className="pt-4 flex justify-end space-x-4">
-            <Button variant="outline">Cancelar</Button>
-            <Button>Salvar Alterações</Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-  
-  return (
-    <div className="bg-muted/30 min-h-screen">
-      {renderAdminHeader()}
-      {renderSidebar()}
-      
-      <div className={`transition-all duration-300 ease-in-out ${
-        mobileMenuOpen ? "md:ml-64" : "ml-0 md:ml-64"
-      } pt-16`}>
-        <div className="p-6">
-          {activeTab === "dashboard" && renderDashboard()}
-          {activeTab === "users" && renderUsers()}
-          {activeTab === "lessons" && renderLessons()}
-          {activeTab === "analytics" && renderAnalytics()}
-          {activeTab === "settings" && renderSettings()}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Admin;
+            <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0

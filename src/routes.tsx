@@ -34,7 +34,7 @@ export const AppRoutes = () => (
       <Route path="/conquistas" element={<Conquistas />} />
       <Route path="/login" element={<Login />} />
       <Route path="/registro" element={<Registro />} />
-      <Route path="/admin" element={<Admin />} />
+      <Route path="/admin/*" element={<Admin />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </BrowserRouter>
