@@ -64,8 +64,8 @@ const LessonsOverview = () => {
                 </div>
                 <ProgressIndicator value={category.progress} max={100} />
               </div>
-              <Button asChild className="w-full">
-                <Link to={category.link}>Acessar Lições</Link>
+              <Button as={Link} to={category.link} className="w-full">
+                Acessar Lições
               </Button>
             </CardContent>
           </Card>

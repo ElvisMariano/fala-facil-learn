@@ -125,10 +125,13 @@ const LessonsList = () => {
                 </div>
               )}
               
-              <Button asChild className="w-full mt-2" disabled={lesson.locked}>
-                <Link to={lesson.locked ? "#" : `/licoes/licao/${lesson.id}`}>
-                  {lesson.locked ? "Bloqueado" : (lesson.completed ? "Revisar Lição" : "Iniciar Lição")}
-                </Link>
+              <Button 
+                as={Link} 
+                to={lesson.locked ? "#" : `/licoes/licao/${lesson.id}`} 
+                className="w-full mt-2" 
+                disabled={lesson.locked}
+              >
+                {lesson.locked ? "Bloqueado" : (lesson.completed ? "Revisar Lição" : "Iniciar Lição")}
               </Button>
               
               {lesson.locked && (

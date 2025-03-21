@@ -42,13 +42,27 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
+  as?: React.ElementType;
+  to?: string;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, width, isLoading, children, ...props }, ref) => {
+  ({ className, variant, size, width, isLoading, children, as: Component = "button", ...props }, ref) => {
+    const buttonClasses = cn(buttonVariants({ variant, size, width, className }));
+    
+    if (Component !== "button") {
+      // @ts-ignore - We're intentionally passing button props to a non-button element
+      return (
+        <Component className={buttonClasses} {...props}>
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {children}
+        </Component>
+      );
+    }
+    
     return (
       <button
-        className={cn(buttonVariants({ variant, size, width, className }))}
+        className={buttonClasses}
         ref={ref}
         disabled={isLoading || props.disabled}
         {...props}

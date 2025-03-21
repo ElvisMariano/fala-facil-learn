@@ -122,10 +122,8 @@ const LessonsList = () => {
                 </div>
               )}
               
-              <Button asChild className="w-full mt-2">
-                <Link to={`/licoes/licao/${lesson.id}`}>
-                  {lesson.completed ? "Revisar Lição" : "Iniciar Lição"}
-                </Link>
+              <Button as={Link} to={`/licoes/licao/${lesson.id}`} className="w-full mt-2">
+                {lesson.completed ? "Revisar Lição" : "Iniciar Lição"}
               </Button>
             </CardContent>
           </Card>

@@ -166,8 +166,8 @@ const Dashboard = () => {
             <div className="col-span-1 lg:col-span-2">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-display font-bold">Lições Recomendadas</h2>
-                <Button variant="ghost" asChild>
-                  <Link to="/licoes">Ver Todas as Lições</Link>
+                <Button variant="ghost" as={Link} to="/licoes">
+                  Ver Todas as Lições
                 </Button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

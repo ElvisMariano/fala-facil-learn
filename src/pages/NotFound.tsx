@@ -20,17 +20,13 @@ const NotFound = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild>
-              <Link to="/">
-                <Home className="mr-2 h-4 w-4" />
-                Voltar ao Início
-              </Link>
+            <Button as={Link} to="/">
+              <Home className="mr-2 h-4 w-4" />
+              Voltar ao Início
             </Button>
-            <Button variant="outline" asChild>
-              <Link to="/licoes">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Explorar Lições
-              </Link>
+            <Button variant="outline" as={Link} to="/licoes">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Explorar Lições
             </Button>
           </div>
         </div>
