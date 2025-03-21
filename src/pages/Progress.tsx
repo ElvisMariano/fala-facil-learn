@@ -1,14 +1,12 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { ProgressIndicator } from "@/components/ui/custom/ProgressIndicator";
-import { BarChart, Calendar, Clock, LineChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Bar, Line } from "recharts";
+import { BarChart, LineChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Bar, Line } from "recharts";
 import { Link } from "react-router-dom";
 
-// Sample data for charts
 const weeklyData = [
   { day: "Seg", minutes: 15, words: 12, xp: 120 },
   { day: "Ter", minutes: 20, words: 18, xp: 180 },
