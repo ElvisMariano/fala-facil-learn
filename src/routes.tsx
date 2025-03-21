@@ -12,6 +12,10 @@ import Registro from "./pages/Registro";
 import Vocabulary from "./pages/Vocabulary";
 import Grammar from "./pages/Grammar";
 import Conversation from "./pages/Conversation";
+import Progress from "./pages/Progress";
+import Community from "./pages/Community";
+import Admin from "./pages/Admin";
+import ModalVerbsLesson from "./pages/grammar/ModalVerbsLesson";
 
 export const AppRoutes = () => (
   <BrowserRouter>
@@ -21,12 +25,16 @@ export const AppRoutes = () => (
       <Route path="/licoes/*" element={<Lessons />} />
       <Route path="/flashcards" element={<FlashcardPage />} />
       <Route path="/vocabulario/*" element={<Vocabulary />} />
-      <Route path="/gramatica/*" element={<Grammar />} />
+      <Route path="/gramatica" element={<Grammar />} />
+      <Route path="/gramatica/modal-verbs" element={<ModalVerbsLesson />} />
       <Route path="/conversacao/*" element={<Conversation />} />
+      <Route path="/progresso" element={<Progress />} />
+      <Route path="/comunidade" element={<Community />} />
       <Route path="/perfil" element={<Perfil />} />
       <Route path="/conquistas" element={<Conquistas />} />
       <Route path="/login" element={<Login />} />
       <Route path="/registro" element={<Registro />} />
+      <Route path="/admin" element={<Admin />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   </BrowserRouter>
