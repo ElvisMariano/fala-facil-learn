@@ -1,6 +1,31 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/custom/Card";
-import { Book, Award, BarChart3, ListChecks, Flashcard, Users } from "lucide-react";
+import { Book, Award, BarChart3, ListChecks, Users } from "lucide-react";
+import React from "react";
+
+// Custom Flashcard icon since it's not in lucide-react
+const FlashcardIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <rect x="2" y="4" width="20" height="16" rx="2" />
+    <line x1="12" y1="4" x2="12" y2="20" />
+    <path d="M9 10 L6 10" />
+    <path d="M9 14 L6 14" />
+    <path d="M18 10 L15 10" />
+    <path d="M18 8 L15 8" />
+    <path d="M18 12 L15 12" />
+  </svg>
+);
 
 const features = [
   {
@@ -9,7 +34,7 @@ const features = [
     description: "Comprehensive lessons organized by proficiency levels from beginner to advanced."
   },
   {
-    icon: <Flashcard className="h-6 w-6 text-primary" />,
+    icon: <FlashcardIcon className="h-6 w-6 text-primary" />,
     title: "Flashcard System",
     description: "Master vocabulary with our spaced repetition system optimized for memory retention."
   },
@@ -69,29 +94,5 @@ const Features = () => {
     </section>
   );
 };
-
-// Custom Flashcard icon since it's not in lucide-react
-const Flashcard = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="24"
-    height="24"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...props}
-  >
-    <rect x="2" y="4" width="20" height="16" rx="2" />
-    <line x1="12" y1="4" x2="12" y2="20" />
-    <path d="M9 10 L6 10" />
-    <path d="M9 14 L6 14" />
-    <path d="M18 10 L15 10" />
-    <path d="M18 8 L15 8" />
-    <path d="M18 12 L15 12" />
-  </svg>
-);
 
 export default Features;
