@@ -1,0 +1,24 @@
+### Registro de usuário
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Usuário Teste",
+  "email": "teste@example.com",
+  "password": "123456"
+}
+
+### Login
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "teste@example.com",
+  "password": "123456"
+}
+
+### Perfil do Usuário (Protegido)
+GET http://localhost:3000/api/auth/me
+Authorization: Bearer {{token}}
+
+# Substitua {{token}} pelo token retornado no login 

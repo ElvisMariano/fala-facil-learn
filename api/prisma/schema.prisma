@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+// Usuário
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  level         Int       @default(1)
+  xp            Int       @default(0)
+  streak        Int       @default(0)
+  lastActivity  DateTime  @default(now())
+  role          UserRole  @default(STUDENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  // Relações
+  progress      Progress[]
+  achievements  UserAchievement[]
+  forumPosts    ForumPost[]
+  forumReplies  ForumReply[]
+
+  @@map("users")
+}
+
+// Lição
+model Lesson {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  category    String
+  level       String
+  content     Json
+  status      String    @default("draft")
+  order       Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Relações
+  progress    Progress[]
+
+  @@map("lessons")
+}
+
+// Progresso do usuário
+model Progress {
+  id          String    @id @default(uuid())
+  userId      String
+  lessonId    String
+  status      String    @default("not_started")
+  score       Int       @default(0)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relações
+  user        User      @relation(fields: [userId], references: [id])
+  lesson      Lesson    @relation(fields: [lessonId], references: [id])
+
+  @@map("progress")
+}
+
+// Conquista
+model Achievement {
+  id          String    @id @default(uuid())
+  title       String
+  description String
+  criteria    Json
+  points      Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relações
+  users       UserAchievement[]
+
+  @@map("achievements")
+}
+
+// Relação Usuário-Conquista
+model UserAchievement {
+  id            String    @id @default(uuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime  @default(now())
+
+  // Relações
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  @@map("user_achievements")
+}
+
+// Post do Fórum
+model ForumPost {
+  id          String    @id @default(uuid())
+  userId      String
+  title       String
+  content     String
+  status      String    @default("pending")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Relações
+  user        User        @relation(fields: [userId], references: [id])
+  replies     ForumReply[]
+
+  @@map("forum_posts")
+}
+
+// Resposta do Fórum
+model ForumReply {
+  id          String    @id @default(uuid())
+  postId      String
+  userId      String
+  content     String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  // Relações
+  post        ForumPost  @relation(fields: [postId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
+
+  @@map("forum_replies")
+}
+
+enum UserRole {
+  ADMIN
+  STUDENT
+  MODERATOR
+} 
