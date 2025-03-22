@@ -10,8 +10,9 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params
     const lesson = await prisma.lesson.findUnique({
-      where: { id: params.id, deletedAt: null },
+      where: { id, deletedAt: null },
       include: {
         _count: {
           select: {

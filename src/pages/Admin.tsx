@@ -556,26 +556,124 @@ const Admin = () => {
     </div>
   );
   
-  const renderUsers = () => (
+  const renderUsers = () => {
+    return (
+      <div className="space-y-6">
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
+              <CardTitle>Gerenciar Usuários</CardTitle>
+              <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Buscar usuários..."
+                    className="pl-10 pr-4 py-2 w-full sm:w-64 border rounded-lg"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Button>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Novo Usuário
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-3 px-2 text-left font-medium">Nome</th>
+                    <th className="py-3 px-2 text-left font-medium">E-mail</th>
+                    <th className="py-3 px-2 text-left font-medium">Nível</th>
+                    <th className="py-3 px-2 text-left font-medium">Registrado em</th>
+                    <th className="py-3 px-2 text-left font-medium">Último acesso</th>
+                    <th className="py-3 px-2 text-left font-medium">Status</th>
+                    <th className="py-3 px-2 text-left font-medium">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map(user => (
+                    <tr key={user.id} className="border-b hover:bg-muted/30">
+                      <td className="py-3 px-2">
+                        <div className="flex items-center">
+                          <div className="bg-muted rounded-full h-8 w-8 flex items-center justify-center mr-2">
+                            <span className="text-sm font-medium">{user.name.charAt(0)}{user.name.split(' ')[1]?.charAt(0)}</span>
+                          </div>
+                          <span>{user.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-2">{user.email}</td>
+                      <td className="py-3 px-2">{user.level}</td>
+                      <td className="py-3 px-2">{user.registered}</td>
+                      <td className="py-3 px-2">{user.lastAccess}</td>
+                      <td className="py-3 px-2">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {user.status === 'active' ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-2">
+                        <div className="flex space-x-2">
+                          <button className="p-1 hover:bg-muted rounded">
+                            <PencilLine className="h-4 w-4" />
+                          </button>
+                          <button className="p-1 hover:bg-muted rounded text-red-500">
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {filteredUsers.length === 0 && (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">Nenhum usuário encontrado para "{searchTerm}"</p>
+              </div>
+            )}
+            
+            <div className="mt-6 flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {filteredUsers.length} de {usersData.length} usuários
+              </div>
+              <div className="flex space-x-2">
+                <Button variant="outline" size="sm" disabled>Anterior</Button>
+                <Button variant="outline" size="sm" disabled>Próximo</Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+  
+  const renderLessons = () => (
     <div className="space-y-6">
       <Card className="border-0 shadow-sm">
         <CardHeader>
           <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle>Gerenciar Usuários</CardTitle>
+            <CardTitle>Gerenciar Lições</CardTitle>
             <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Buscar usuários..."
+                  placeholder="Buscar lições..."
                   className="pl-10 pr-4 py-2 w-full sm:w-64 border rounded-lg"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <Button>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Novo Usuário
+                <FilePlus className="h-4 w-4 mr-2" />
+                Nova Lição
               </Button>
             </div>
           </div>
@@ -585,35 +683,26 @@ const Admin = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b">
-                  <th className="py-3 px-2 text-left font-medium">Nome</th>
-                  <th className="py-3 px-2 text-left font-medium">E-mail</th>
+                  <th className="py-3 px-2 text-left font-medium">Título</th>
+                  <th className="py-3 px-2 text-left font-medium">Categoria</th>
                   <th className="py-3 px-2 text-left font-medium">Nível</th>
-                  <th className="py-3 px-2 text-left font-medium">Registrado em</th>
-                  <th className="py-3 px-2 text-left font-medium">Último acesso</th>
+                  <th className="py-3 px-2 text-left font-medium">Alunos</th>
                   <th className="py-3 px-2 text-left font-medium">Status</th>
                   <th className="py-3 px-2 text-left font-medium">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map(user => (
-                  <tr key={user.id} className="border-b hover:bg-muted/30">
-                    <td className="py-3 px-2">
-                      <div className="flex items-center">
-                        <div className="bg-muted rounded-full h-8 w-8 flex items-center justify-center mr-2">
-                          <span className="text-sm font-medium">{user.name.charAt(0)}{user.name.split(' ')[1]?.charAt(0)}</span>
-                        </div>
-                        <span>{user.name}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-2">{user.email}</td>
-                    <td className="py-3 px-2">{user.level}</td>
-                    <td className="py-3 px-2">{user.registered}</td>
-                    <td className="py-3 px-2">{user.lastAccess}</td>
+                {filteredLessons.map(lesson => (
+                  <tr key={lesson.id} className="border-b hover:bg-muted/30">
+                    <td className="py-3 px-2">{lesson.title}</td>
+                    <td className="py-3 px-2">{lesson.category}</td>
+                    <td className="py-3 px-2">{lesson.level}</td>
+                    <td className="py-3 px-2">{lesson.students}</td>
                     <td className="py-3 px-2">
                       <span className={`px-2 py-1 rounded-full text-xs ${
-                        user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        lesson.status === 'published' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
                       }`}>
-                        {user.status === 'active' ? 'Ativo' : 'Inativo'}
+                        {lesson.status === 'published' ? 'Publicado' : 'Rascunho'}
                       </span>
                     </td>
                     <td className="py-3 px-2">
@@ -632,15 +721,15 @@ const Admin = () => {
             </table>
           </div>
           
-          {filteredUsers.length === 0 && (
+          {filteredLessons.length === 0 && (
             <div className="text-center py-10">
-              <p className="text-muted-foreground">Nenhum usuário encontrado para "{searchTerm}"</p>
+              <p className="text-muted-foreground">Nenhuma lição encontrada para "{searchTerm}"</p>
             </div>
           )}
           
           <div className="mt-6 flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
-              Mostrando {filteredUsers.length} de {usersData.length} usuários
+              Mostrando {filteredLessons.length} de {lessonsData.length} lições
             </div>
             <div className="flex space-x-2">
               <Button variant="outline" size="sm" disabled>Anterior</Button>
@@ -651,11 +740,309 @@ const Admin = () => {
       </Card>
     </div>
   );
-  
-  const renderLessons = () => (
-    <div className="space-y-6">
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
-            <CardTitle>Gerenciar Lições</CardTitle>
-            <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0
+
+  return (
+    <div className="min-h-screen bg-background">
+      {renderAdminHeader()}
+      <div className="flex">
+        {renderSidebar()}
+        <main className="flex-1 p-6">
+          {activeTab === "dashboard" && renderDashboard()}
+          {activeTab === "users" && renderUsers()}
+          {activeTab === "lessons" && renderLessons()}
+          {activeTab === "activities" && (
+            <div className="space-y-6">
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
+                    <CardTitle>Gerenciar Atividades</CardTitle>
+                    <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <input
+                          type="text"
+                          placeholder="Buscar atividades..."
+                          className="pl-10 pr-4 py-2 w-full sm:w-64 border rounded-lg"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </div>
+                      <Button>
+                        <FilePlus className="h-4 w-4 mr-2" />
+                        Nova Atividade
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-3 px-2 text-left font-medium">Título</th>
+                          <th className="py-3 px-2 text-left font-medium">Tipo</th>
+                          <th className="py-3 px-2 text-left font-medium">Categoria</th>
+                          <th className="py-3 px-2 text-left font-medium">Nível</th>
+                          <th className="py-3 px-2 text-left font-medium">Status</th>
+                          <th className="py-3 px-2 text-left font-medium">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredActivities.map(activity => (
+                          <tr key={activity.id} className="border-b hover:bg-muted/30">
+                            <td className="py-3 px-2">{activity.title}</td>
+                            <td className="py-3 px-2">{activity.type}</td>
+                            <td className="py-3 px-2">{activity.category}</td>
+                            <td className="py-3 px-2">{activity.level}</td>
+                            <td className="py-3 px-2">
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                activity.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                              }`}>
+                                {activity.status === 'active' ? 'Ativo' : 'Inativo'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-2">
+                              <div className="flex space-x-2">
+                                <button className="p-1 hover:bg-muted rounded">
+                                  <PencilLine className="h-4 w-4" />
+                                </button>
+                                <button className="p-1 hover:bg-muted rounded text-red-500">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {filteredActivities.length === 0 && (
+                    <div className="text-center py-10">
+                      <p className="text-muted-foreground">Nenhuma atividade encontrada para "{searchTerm}"</p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Mostrando {filteredActivities.length} de {activitiesData.length} atividades
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" disabled>Anterior</Button>
+                      <Button variant="outline" size="sm" disabled>Próximo</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          {activeTab === "forum" && (
+            <div className="space-y-6">
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
+                    <CardTitle>Gerenciar Fórum</CardTitle>
+                    <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <input
+                          type="text"
+                          placeholder="Buscar posts..."
+                          className="pl-10 pr-4 py-2 w-full sm:w-64 border rounded-lg"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </div>
+                      <Button>
+                        <FilePlus className="h-4 w-4 mr-2" />
+                        Novo Post
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-3 px-2 text-left font-medium">Título</th>
+                          <th className="py-3 px-2 text-left font-medium">Autor</th>
+                          <th className="py-3 px-2 text-left font-medium">Data</th>
+                          <th className="py-3 px-2 text-left font-medium">Status</th>
+                          <th className="py-3 px-2 text-left font-medium">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredForumPosts.map(post => (
+                          <tr key={post.id} className="border-b hover:bg-muted/30">
+                            <td className="py-3 px-2">{post.title}</td>
+                            <td className="py-3 px-2">{post.author}</td>
+                            <td className="py-3 px-2">{post.date}</td>
+                            <td className="py-3 px-2">
+                              <span className={`px-2 py-1 rounded-full text-xs ${
+                                post.status === 'approved' ? 'bg-green-100 text-green-800' : post.status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                                {post.status === 'approved' ? 'Aprovado' : post.status === 'pending' ? 'Pendente' : 'Rejeitado'}
+                              </span>
+                            </td>
+                            <td className="py-3 px-2">
+                              <div className="flex space-x-2">
+                                <button className="p-1 hover:bg-muted rounded">
+                                  <PencilLine className="h-4 w-4" />
+                                </button>
+                                <button className="p-1 hover:bg-muted rounded text-red-500">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {filteredForumPosts.length === 0 && (
+                    <div className="text-center py-10">
+                      <p className="text-muted-foreground">Nenhum post encontrado para "{searchTerm}"</p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Mostrando {filteredForumPosts.length} de {forumPostsData.length} posts
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" disabled>Anterior</Button>
+                      <Button variant="outline" size="sm" disabled>Próximo</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          {activeTab === "analytics" && (
+            <div className="space-y-6">
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
+                    <CardTitle>Análises de Usuário</CardTitle>
+                    <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <input
+                          type="text"
+                          placeholder="Buscar análises..."
+                          className="pl-10 pr-4 py-2 w-full sm:w-64 border rounded-lg"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </div>
+                      <Button>
+                        <FilePlus className="h-4 w-4 mr-2" />
+                        Nova Análise
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-3 px-2 text-left font-medium">Mês</th>
+                          <th className="py-3 px-2 text-left font-medium">Usuários</th>
+                          <th className="py-3 px-2 text-left font-medium">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsData.userGrowth.map(growth => (
+                          <tr key={growth.month} className="border-b hover:bg-muted/30">
+                            <td className="py-3 px-2">{growth.month}</td>
+                            <td className="py-3 px-2">{growth.users}</td>
+                            <td className="py-3 px-2">
+                              <div className="flex space-x-2">
+                                <button className="p-1 hover:bg-muted rounded">
+                                  <PencilLine className="h-4 w-4" />
+                                </button>
+                                <button className="p-1 hover:bg-muted rounded text-red-500">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {analyticsData.userGrowth.length === 0 && (
+                    <div className="text-center py-10">
+                      <p className="text-muted-foreground">Nenhuma análise de usuário encontrada para "{searchTerm}"</p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-6 flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      Mostrando {analyticsData.userGrowth.length} de {analyticsData.userGrowth.length} análises de usuário
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" disabled>Anterior</Button>
+                      <Button variant="outline" size="sm" disabled>Próximo</Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          {activeTab === "settings" && (
+            <div className="space-y-6">
+              <Card className="border-0 shadow-sm">
+                <CardHeader>
+                  <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
+                    <CardTitle>Configurações do Sistema</CardTitle>
+                    <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <input
+                          type="text"
+                          placeholder="Buscar configurações..."
+                          className="pl-10 pr-4 py-2 w-full sm:w-64 border rounded-lg"
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </div>
+                      <Button>
+                        <FilePlus className="h-4 w-4 mr-2" />
+                        Nova Configuração
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-3 px-2 text-left font-medium">Configuração</th>
+                          <th className="py-3 px-2 text-left font-medium">Valor</th>
+                          <th className="py-3 px-2 text-left font-medium">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* Add your settings data here */}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {/* Add your settings data length check here */}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default Admin;

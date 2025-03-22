@@ -10,15 +10,16 @@ datasource db {
 
 // Usuário
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
+  id            String     @id @default(cuid())
   name          String
+  email         String     @unique
   passwordHash  String
+  role          UserRole  @default(STUDENT)
   level         Int       @default(1)
   xp            Int       @default(0)
   streak        Int       @default(0)
-  lastActivity  DateTime  @default(now())
-  role          UserRole  @default(STUDENT)
+  timezone      String    @default("UTC")
+  lastActivityAt DateTime  @default(now())
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
@@ -57,9 +58,15 @@ model Progress {
   id          String    @id @default(uuid())
   userId      String
   lessonId    String
-  status      String    @default("not_started")
-  score       Int       @default(0)
+  status      Status    @default(NOT_STARTED)
+  startedAt   DateTime?
   completedAt DateTime?
+  timeSpent   Int       @default(0) // em segundos
+  attempts    Int       @default(0)
+  errors      Int       @default(0)
+  xpEarned    Int       @default(0)
+  nextReview  DateTime?
+  reviewCount Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -67,6 +74,10 @@ model Progress {
   user        User      @relation(fields: [userId], references: [id])
   lesson      Lesson    @relation(fields: [lessonId], references: [id])
 
+  @@unique([userId, lessonId])
+  @@index([userId, status])
+  @@index([lessonId, status])
+  @@index([userId, nextReview])
   @@map("progress")
 }
 
@@ -139,4 +150,10 @@ enum UserRole {
   ADMIN
   STUDENT
   MODERATOR
+}
+
+enum Status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
 } 
