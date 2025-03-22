@@ -1,384 +1,509 @@
 
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
-import { Search, FilePlus, PencilLine, Trash2, EyeOff, Eye, Plus, X } from "lucide-react";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { 
+  Plus, 
+  Search, 
+  Pencil, 
+  Trash2, 
+  X, 
+  Save,
+  Volume2,
+  MessageSquare,
+  ListChecks
+} from "lucide-react";
 
-interface ConversationActivityType {
+// Tipo para atividades de conversação
+interface ConversationActivity {
   id: number;
   title: string;
-  level: string;
-  minutes: number;
-  rating: number;
-  scenarios: string[];
-  active: boolean;
   description: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  type: 'role-play' | 'dialogue' | 'discussion' | 'interview';
+  participants: number;
+  duration: number; // em minutos
+  topics: string[];
+  hasAudio: boolean;
+  status: 'active' | 'inactive';
+  createdAt: string;
 }
 
-const sampleConversationActivities: ConversationActivityType[] = [
+// Dados de exemplo para atividades de conversação
+const sampleActivities: ConversationActivity[] = [
   {
     id: 1,
-    title: "Saudações e Apresentações",
-    level: "A1",
-    minutes: 15,
-    rating: 4.5,
-    scenarios: ["No escritório", "Em uma festa", "Na rua"],
-    active: true,
-    description: "Diálogos básicos para cumprimentos e apresentações"
+    title: "No Restaurante",
+    description: "Praticar diálogo em um restaurante, fazendo pedidos e conversando com o garçom.",
+    level: "beginner",
+    type: "role-play",
+    participants: 2,
+    duration: 10,
+    topics: ["food", "ordering", "restaurant"],
+    hasAudio: true,
+    status: "active",
+    createdAt: "12/03/2023"
   },
   {
     id: 2,
-    title: "No Restaurante",
-    level: "A2",
-    minutes: 20,
-    rating: 4.7,
-    scenarios: ["Fazendo reservas", "Pedindo comida", "Pagando a conta"],
-    active: true,
-    description: "Como fazer pedidos e se comunicar em restaurantes"
+    title: "Entrevista de Emprego",
+    description: "Simular uma entrevista de emprego para praticar vocabulário profissional.",
+    level: "intermediate",
+    type: "interview",
+    participants: 2,
+    duration: 15,
+    topics: ["job", "career", "professional"],
+    hasAudio: true,
+    status: "active",
+    createdAt: "15/04/2023"
   },
   {
     id: 3,
-    title: "Fazendo Compras",
-    level: "A2",
-    minutes: 25,
-    rating: 4.6,
-    scenarios: ["Em uma loja de roupas", "No supermercado", "Negociando preços"],
-    active: true,
-    description: "Diálogos úteis para compras em lojas"
+    title: "Debate: Meio Ambiente",
+    description: "Debater sobre questões ambientais e soluções sustentáveis.",
+    level: "advanced",
+    type: "discussion",
+    participants: 4,
+    duration: 20,
+    topics: ["environment", "sustainability", "climate"],
+    hasAudio: false,
+    status: "active",
+    createdAt: "22/05/2023"
   },
   {
     id: 4,
-    title: "Viagens",
-    level: "A2-B1",
-    minutes: 30,
-    rating: 4.9,
-    scenarios: ["No aeroporto", "No hotel", "Pedindo direções"],
-    active: true,
-    description: "Conversas em situações de viagem"
-  },
-  {
-    id: 5,
-    title: "Entrevista de Emprego",
-    level: "B1",
-    minutes: 35,
-    rating: 4.8,
-    scenarios: ["Qualificações", "Experiência anterior", "Respondendo perguntas comuns"],
-    active: true,
-    description: "Como se comunicar em uma entrevista de trabalho"
+    title: "Conversação Cotidiana",
+    description: "Praticar diálogos do dia a dia com situações comuns.",
+    level: "beginner",
+    type: "dialogue",
+    participants: 2,
+    duration: 8,
+    topics: ["daily life", "casual", "greetings"],
+    hasAudio: true,
+    status: "inactive",
+    createdAt: "10/02/2023"
   }
 ];
 
-interface ConversationActivitiesManagerProps {
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-}
+const ConversationActivitiesManager: React.FC = () => {
+  const [activities, setActivities] = useState<ConversationActivity[]>(sampleActivities);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<ConversationActivity | null>(null);
+  const [newActivity, setNewActivity] = useState<Partial<ConversationActivity>>({
+    title: "",
+    description: "",
+    level: "beginner",
+    type: "dialogue",
+    participants: 2,
+    duration: 10,
+    topics: [],
+    hasAudio: false,
+    status: "active"
+  });
+  const [topicInput, setTopicInput] = useState("");
 
-const ConversationActivitiesManager: React.FC<ConversationActivitiesManagerProps> = ({ 
-  searchTerm, 
-  setSearchTerm 
-}) => {
-  const [activities, setActivities] = useState<ConversationActivityType[]>(sampleConversationActivities);
-  const [showActivityForm, setShowActivityForm] = useState(false);
-  const [currentActivity, setCurrentActivity] = useState<ConversationActivityType | null>(null);
-  const [newScenario, setNewScenario] = useState("");
-  const [editingScenarios, setEditingScenarios] = useState<string[]>([]);
-  
+  // Filtrar atividades baseado no termo de busca
   const filteredActivities = activities.filter(activity => 
     activity.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    activity.level.toLowerCase().includes(searchTerm.toLowerCase())
+    activity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    activity.topics.some(topic => topic.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const handleEditActivity = (activity: ConversationActivityType) => {
-    setCurrentActivity(activity);
-    setEditingScenarios([...activity.scenarios]);
-    setShowActivityForm(true);
+  // Manipulador para editar uma atividade
+  const handleEditActivity = (activity: ConversationActivity) => {
+    setEditingActivity(activity);
+    setNewActivity(activity);
+    setIsFormOpen(true);
   };
 
-  const handleAddScenario = () => {
-    if (newScenario.trim() && editingScenarios) {
-      setEditingScenarios([...editingScenarios, newScenario.trim()]);
-      setNewScenario("");
+  // Manipulador para excluir uma atividade
+  const handleDeleteActivity = (id: number) => {
+    if (window.confirm("Tem certeza que deseja excluir esta atividade?")) {
+      setActivities(activities.filter(activity => activity.id !== id));
     }
   };
 
-  const handleRemoveScenario = (index: number) => {
-    setEditingScenarios(editingScenarios.filter((_, i) => i !== index));
+  // Manipulador para mudanças no formulário
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    
+    if (type === 'checkbox') {
+      const checked = (e.target as HTMLInputElement).checked;
+      setNewActivity(prev => ({ ...prev, [name]: checked }));
+    } else if (name === 'participants' || name === 'duration') {
+      setNewActivity(prev => ({ ...prev, [name]: parseInt(value) || 0 }));
+    } else {
+      setNewActivity(prev => ({ ...prev, [name]: value }));
+    }
   };
 
-  const handleSaveActivity = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Exemplo de implementação - em um app real, isso seria uma chamada à API
-    if (currentActivity) {
-      // Editar atividade existente
-      setActivities(activities.map(act => 
-        act.id === currentActivity.id 
-          ? {...currentActivity, scenarios: editingScenarios} 
-          : act
+  // Manipulador para adicionar tópicos
+  const handleAddTopic = () => {
+    if (topicInput.trim()) {
+      setNewActivity(prev => ({
+        ...prev,
+        topics: [...(prev.topics || []), topicInput.trim()]
+      }));
+      setTopicInput("");
+    }
+  };
+
+  // Manipulador para remover tópicos
+  const handleRemoveTopic = (topicToRemove: string) => {
+    setNewActivity(prev => ({
+      ...prev,
+      topics: (prev.topics || []).filter(topic => topic !== topicToRemove)
+    }));
+  };
+
+  // Manipulador para salvar uma atividade
+  const handleSaveActivity = () => {
+    if (!newActivity.title || !newActivity.description) {
+      alert("Título e descrição são campos obrigatórios!");
+      return;
+    }
+
+    if (editingActivity) {
+      // Atualizar atividade existente
+      setActivities(activities.map(activity => 
+        activity.id === editingActivity.id ? { ...activity, ...newActivity } as ConversationActivity : activity
       ));
     } else {
       // Adicionar nova atividade
-      const newActivity: ConversationActivityType = {
-        id: Math.max(0, ...activities.map(a => a.id)) + 1,
-        title: "Nova Atividade",
-        level: "A1",
-        minutes: 15,
-        rating: 4.0,
-        scenarios: editingScenarios,
-        active: true,
-        description: "Descrição da nova atividade"
-      };
-      setActivities([...activities, newActivity]);
+      const newId = Math.max(...activities.map(activity => activity.id), 0) + 1;
+      const today = new Date().toLocaleDateString("pt-BR");
+      
+      setActivities([
+        ...activities, 
+        { 
+          ...newActivity as ConversationActivity, 
+          id: newId,
+          createdAt: today
+        }
+      ]);
     }
-    
-    setShowActivityForm(false);
-    setCurrentActivity(null);
-    setEditingScenarios([]);
-  };
 
-  const handleToggleActive = (id: number) => {
-    setActivities(activities.map(act => 
-      act.id === id ? {...act, active: !act.active} : act
-    ));
-  };
-
-  const handleDeleteActivity = (id: number) => {
-    setActivities(activities.filter(act => act.id !== id));
+    // Resetar o formulário
+    setNewActivity({
+      title: "",
+      description: "",
+      level: "beginner",
+      type: "dialogue",
+      participants: 2,
+      duration: 10,
+      topics: [],
+      hasAudio: false,
+      status: "active"
+    });
+    setEditingActivity(null);
+    setIsFormOpen(false);
   };
 
   return (
-    <Card className="border-0 shadow-sm">
-      <CardHeader>
-        <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
-          <CardTitle>Gerenciar Atividades de Conversação</CardTitle>
-          <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="Buscar atividades..."
-                className="pl-10 pr-4 py-2 w-full sm:w-64 border rounded-lg"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+    <div className="space-y-6">
+      <Card className="border-0 shadow-sm">
+        <CardHeader>
+          <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <CardTitle>Gerenciar Atividades de Conversação</CardTitle>
+              <CardDescription>Crie e edite atividades para praticar habilidades de conversação</CardDescription>
             </div>
-            <Button onClick={() => {
-              setCurrentActivity(null);
-              setEditingScenarios([]);
-              setShowActivityForm(true);
-            }}>
-              <FilePlus className="h-4 w-4 mr-2" />
-              Nova Atividade
-            </Button>
+            <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Buscar atividades..."
+                  className="pl-10 pr-4 py-2 w-full sm:w-64"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Button onClick={() => setIsFormOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Atividade
+              </Button>
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredActivities.map(activity => (
-            <div key={activity.id} className="border rounded-lg overflow-hidden">
-              <div className={`p-4 ${activity.active ? 'bg-white' : 'bg-gray-100'}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                    activity.level.includes('A1') ? 'bg-green-100 text-green-800' :
-                    activity.level.includes('A2') ? 'bg-blue-100 text-blue-800' :
-                    activity.level.includes('B1') ? 'bg-purple-100 text-purple-800' :
-                    'bg-amber-100 text-amber-800'
-                  }`}>
-                    {activity.level}
-                  </span>
-                  <div className="flex space-x-1">
-                    <button 
-                      className="p-1 hover:bg-muted rounded"
-                      onClick={() => handleEditActivity(activity)}
-                    >
-                      <PencilLine className="h-4 w-4" />
-                    </button>
-                    <button 
-                      className="p-1 hover:bg-muted rounded"
-                      onClick={() => handleToggleActive(activity.id)}
-                    >
-                      {activity.active ? 
-                        <EyeOff className="h-4 w-4 text-amber-500" /> : 
-                        <Eye className="h-4 w-4 text-green-500" />
-                      }
-                    </button>
-                    <button 
-                      className="p-1 hover:bg-muted rounded text-red-500"
-                      onClick={() => handleDeleteActivity(activity.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+        </CardHeader>
+        <CardContent>
+          {isFormOpen && (
+            <Card className="mb-6 border border-primary/20 bg-primary/5">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-lg">
+                    {editingActivity ? "Editar Atividade" : "Nova Atividade"}
+                  </CardTitle>
+                  <Button variant="ghost" size="icon" onClick={() => {
+                    setIsFormOpen(false);
+                    setEditingActivity(null);
+                    setNewActivity({
+                      title: "",
+                      description: "",
+                      level: "beginner",
+                      type: "dialogue",
+                      participants: 2,
+                      duration: 10,
+                      topics: [],
+                      hasAudio: false,
+                      status: "active"
+                    });
+                  }}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium">Título *</label>
+                    <Input
+                      name="title"
+                      value={newActivity.title || ""}
+                      onChange={handleFormChange}
+                      placeholder="Ex: Conversação no Restaurante"
+                    />
                   </div>
-                </div>
-                <h3 className="font-medium text-lg mb-1">{activity.title}</h3>
-                <p className="text-sm text-muted-foreground mb-3">{activity.description}</p>
-                
-                <div className="flex items-center text-sm mb-3">
-                  <span className="mr-4">{activity.minutes} minutos</span>
-                  <div className="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" stroke="none">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                    </svg>
-                    <span className="ml-1">{activity.rating}</span>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium">Descrição *</label>
+                    <Textarea
+                      name="description"
+                      value={newActivity.description || ""}
+                      onChange={handleFormChange}
+                      placeholder="Descreva a atividade e seus objetivos"
+                      rows={3}
+                    />
                   </div>
-                </div>
-                
-                <div className="text-sm font-medium mb-1">Cenários:</div>
-                <div className="flex flex-wrap gap-2">
-                  {activity.scenarios.map((scenario, index) => (
-                    <span key={index} className="text-xs bg-muted px-2 py-1 rounded-full">
-                      {scenario}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-          
-          {filteredActivities.length === 0 && (
-            <div className="col-span-full text-center py-10">
-              <p className="text-muted-foreground">Nenhuma atividade encontrada para "{searchTerm}"</p>
-            </div>
-          )}
-        </div>
-          
-        {showActivityForm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg w-full max-w-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">
-                  {currentActivity ? "Editar Atividade" : "Nova Atividade"}
-                </h3>
-                <button 
-                  className="p-1 hover:bg-muted rounded"
-                  onClick={() => setShowActivityForm(false)}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <form className="space-y-4" onSubmit={handleSaveActivity}>
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium mb-1">Título</label>
-                  <Input 
-                    id="title" 
-                    placeholder="Digite o título da atividade" 
-                    defaultValue={currentActivity?.title || ""} 
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="level" className="block text-sm font-medium mb-1">Nível</label>
-                    <select 
-                      id="level" 
-                      className="w-full border rounded-md p-2" 
-                      defaultValue={currentActivity?.level || "A1"}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Nível</label>
+                    <select
+                      name="level"
+                      value={newActivity.level || "beginner"}
+                      onChange={handleFormChange}
+                      className="w-full px-3 py-2 border rounded-md"
                     >
-                      <option value="A1">A1</option>
-                      <option value="A2">A2</option>
-                      <option value="A1-A2">A1-A2</option>
-                      <option value="A2-B1">A2-B1</option>
-                      <option value="B1">B1</option>
-                      <option value="B1-B2">B1-B2</option>
-                      <option value="B2">B2</option>
-                      <option value="C1">C1</option>
-                      <option value="C1-C2">C1-C2</option>
-                      <option value="C2">C2</option>
+                      <option value="beginner">Iniciante</option>
+                      <option value="intermediate">Intermediário</option>
+                      <option value="advanced">Avançado</option>
                     </select>
                   </div>
-                  <div>
-                    <label htmlFor="minutes" className="block text-sm font-medium mb-1">Duração (minutos)</label>
-                    <Input 
-                      id="minutes" 
-                      type="number" 
-                      min="1" 
-                      defaultValue={currentActivity?.minutes.toString() || "15"} 
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium mb-1">Descrição</label>
-                  <Textarea 
-                    id="description" 
-                    placeholder="Digite uma descrição para a atividade" 
-                    className="min-h-24" 
-                    defaultValue={currentActivity?.description || ""}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Cenários</label>
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {editingScenarios.map((scenario, index) => (
-                      <div key={index} className="flex items-center bg-muted rounded-full pl-3 pr-1 py-1">
-                        <span className="text-sm">{scenario}</span>
-                        <button 
-                          type="button"
-                          className="ml-1 p-1 hover:bg-gray-200 rounded-full" 
-                          onClick={() => handleRemoveScenario(index)}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex">
-                    <Input 
-                      placeholder="Adicionar novo cenário" 
-                      value={newScenario}
-                      onChange={(e) => setNewScenario(e.target.value)}
-                      className="rounded-r-none"
-                    />
-                    <Button 
-                      type="button"
-                      variant="secondary"
-                      className="rounded-l-none"
-                      onClick={handleAddScenario}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Tipo de Atividade</label>
+                    <select
+                      name="type"
+                      value={newActivity.type || "dialogue"}
+                      onChange={handleFormChange}
+                      className="w-full px-3 py-2 border rounded-md"
                     >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                      <option value="dialogue">Diálogo</option>
+                      <option value="role-play">Role-Play</option>
+                      <option value="discussion">Discussão</option>
+                      <option value="interview">Entrevista</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Participantes</label>
+                    <Input
+                      name="participants"
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={newActivity.participants || 2}
+                      onChange={handleFormChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Duração (minutos)</label>
+                    <Input
+                      name="duration"
+                      type="number"
+                      min={5}
+                      max={60}
+                      value={newActivity.duration || 10}
+                      onChange={handleFormChange}
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium">Tópicos</label>
+                    <div className="flex space-x-2">
+                      <Input
+                        type="text"
+                        value={topicInput}
+                        onChange={(e) => setTopicInput(e.target.value)}
+                        placeholder="Adicionar tópico"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddTopic();
+                          }
+                        }}
+                      />
+                      <Button 
+                        type="button" 
+                        onClick={handleAddTopic}
+                        variant="outline"
+                      >
+                        Adicionar
+                      </Button>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {newActivity.topics?.map((topic, index) => (
+                        <div key={index} className="bg-primary/10 text-primary px-3 py-1 rounded-full flex items-center">
+                          <span className="text-sm">{topic}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveTopic(topic)}
+                            className="ml-2 text-primary hover:text-primary/70"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="hasAudio"
+                      name="hasAudio"
+                      checked={newActivity.hasAudio || false}
+                      onChange={(e) => 
+                        setNewActivity(prev => ({ ...prev, hasAudio: e.target.checked }))
+                      }
+                      className="rounded"
+                    />
+                    <label htmlFor="hasAudio" className="text-sm font-medium">
+                      Esta atividade possui áudio de exemplo
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="status"
+                      name="status"
+                      checked={newActivity.status === 'active'}
+                      onChange={(e) => 
+                        setNewActivity(prev => ({ 
+                          ...prev, 
+                          status: e.target.checked ? 'active' : 'inactive' 
+                        }))
+                      }
+                      className="rounded"
+                    />
+                    <label htmlFor="status" className="text-sm font-medium">
+                      Atividade ativa
+                    </label>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch 
-                    id="active" 
-                    defaultChecked={currentActivity?.active ?? true}
-                  />
-                  <label htmlFor="active" className="text-sm font-medium">Atividade ativa</label>
-                </div>
-                <div className="flex justify-end space-x-3 mt-6">
-                  <Button 
-                    variant="outline" 
-                    type="button" 
-                    onClick={() => setShowActivityForm(false)}
-                  >
+                <div className="flex justify-end space-x-3">
+                  <Button variant="outline" onClick={() => {
+                    setIsFormOpen(false);
+                    setEditingActivity(null);
+                  }}>
                     Cancelar
                   </Button>
-                  <Button type="submit">
-                    {currentActivity ? "Atualizar" : "Criar"} Atividade
+                  <Button onClick={handleSaveActivity}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar
                   </Button>
                 </div>
-              </form>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Nível</TableHead>
+                  <TableHead>Participantes</TableHead>
+                  <TableHead>Duração</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Criado em</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredActivities.map((activity) => (
+                  <TableRow key={activity.id}>
+                    <TableCell className="font-medium">{activity.title}</TableCell>
+                    <TableCell>
+                      {activity.type === 'dialogue' && 'Diálogo'}
+                      {activity.type === 'role-play' && 'Role-Play'}
+                      {activity.type === 'discussion' && 'Discussão'}
+                      {activity.type === 'interview' && 'Entrevista'}
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        activity.level === 'beginner' 
+                          ? 'bg-green-100 text-green-800' 
+                          : activity.level === 'intermediate'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-purple-100 text-purple-800'
+                      }`}>
+                        {activity.level === 'beginner' 
+                          ? 'Iniciante' 
+                          : activity.level === 'intermediate' 
+                            ? 'Intermediário' 
+                            : 'Avançado'}
+                      </span>
+                    </TableCell>
+                    <TableCell>{activity.participants}</TableCell>
+                    <TableCell>{activity.duration} min</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        activity.status === 'active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {activity.status === 'active' ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </TableCell>
+                    <TableCell>{activity.createdAt}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleEditActivity(activity)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteActivity(activity.id)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {filteredActivities.length === 0 && (
+            <div className="text-center py-10">
+              <p className="text-muted-foreground">
+                {searchTerm 
+                  ? `Nenhuma atividade encontrada para "${searchTerm}"` 
+                  : "Nenhuma atividade cadastrada"}
+              </p>
+            </div>
+          )}
+
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Mostrando {filteredActivities.length} de {activities.length} atividades
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline" size="sm" disabled>Anterior</Button>
+              <Button variant="outline" size="sm" disabled>Próximo</Button>
             </div>
           </div>
-        )}
-        
-        <div className="mt-6 flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            Mostrando {filteredActivities.length} de {activities.length} atividades
-          </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" size="sm" disabled>Anterior</Button>
-            <Button variant="outline" size="sm" disabled>Próximo</Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

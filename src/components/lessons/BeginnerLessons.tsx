@@ -1,133 +1,130 @@
 
-import React from "react";
-import { Route, Routes, Link, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/custom/Card";
+import React, { useState } from "react";
+import { Link, Routes, Route } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
 import { ProgressIndicator } from "@/components/ui/custom/ProgressIndicator";
-import { BookOpen, Clock, CheckCircle, ChevronLeft, Star } from "lucide-react";
+import { BookOpen, Clock, CheckCircle, Lock, ArrowLeft } from "lucide-react";
 import LessonContent from "./LessonContent";
 
+// Dados de exemplo para lições de nível iniciante
 const beginnerLessons = [
-  {
-    id: "basic-greetings",
-    title: "Saudações Básicas",
-    description: "Aprenda a cumprimentar pessoas em inglês",
-    duration: 15,
-    xp: 25,
-    completed: true,
-    level: "A1",
-    topics: ["Hello", "Good morning", "Good afternoon", "Good evening", "Goodbye"]
+  { 
+    id: "b1", 
+    title: "Apresentações e Saudações", 
+    description: "Aprenda a se apresentar e cumprimentar pessoas em inglês.", 
+    duration: 15, 
+    progress: 100, 
+    locked: false 
   },
-  {
-    id: "personal-info",
-    title: "Informações Pessoais",
-    description: "Como se apresentar e perguntar informações básicas",
-    duration: 20,
-    xp: 30,
-    completed: true,
-    level: "A1",
-    topics: ["Name", "Age", "Nationality", "Job"]
+  { 
+    id: "b2", 
+    title: "Números e Contagem", 
+    description: "Aprenda os números em inglês e como contar de 1 a 100.", 
+    duration: 20, 
+    progress: 80, 
+    locked: false 
   },
-  {
-    id: "numbers",
-    title: "Números em Inglês",
-    description: "Aprenda a contar e usar números em conversas",
-    duration: 25,
-    xp: 35,
-    completed: false,
-    level: "A1",
-    topics: ["Numbers 1-10", "Numbers 11-100", "Telephone numbers", "Age"]
+  { 
+    id: "b3", 
+    title: "Família e Relacionamentos", 
+    description: "Vocabulário sobre família e como descrever relacionamentos.", 
+    duration: 25, 
+    progress: 60, 
+    locked: false 
   },
-  {
-    id: "simple-present",
-    title: "Presente Simples",
-    description: "Estrutura e uso do tempo presente simples",
-    duration: 30,
-    xp: 40,
-    completed: false,
-    level: "A1",
-    topics: ["I am", "You are", "He/She is", "Questions", "Negatives"]
+  { 
+    id: "b4", 
+    title: "Presente Simples", 
+    description: "Aprenda a estrutura e uso do Present Simple.", 
+    duration: 30, 
+    progress: 40, 
+    locked: false 
   },
-  {
-    id: "daily-routine",
-    title: "Rotina Diária",
-    description: "Vocabulário e frases para falar sobre seu dia a dia",
-    duration: 25,
-    xp: 35,
-    completed: false,
-    level: "A1",
-    topics: ["Wake up", "Breakfast", "Go to work", "Lunch", "Dinner", "Sleep"]
+  { 
+    id: "b5", 
+    title: "Adjetivos e Descrições", 
+    description: "Adjetivos comuns e como descrever pessoas e objetos.", 
+    duration: 20, 
+    progress: 0, 
+    locked: true 
   },
-  {
-    id: "basic-questions",
-    title: "Perguntas Básicas",
-    description: "Como fazer e responder perguntas simples",
-    duration: 20,
-    xp: 30,
-    completed: false,
-    level: "A2",
-    topics: ["What", "Where", "When", "Who", "How"]
-  }
 ];
 
-const LessonsList = () => {
-  const navigate = useNavigate();
-  
+// Componente para listar lições de nível iniciante
+const BeginnerLessonsOverview = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(true); // Simular estado de login
+
   return (
-    <div>
-      <div className="flex items-center mb-8 gap-4">
-        <Button variant="ghost" size="sm" onClick={() => navigate("/licoes")}>
-          <ChevronLeft className="mr-1 h-4 w-4" />
-          Voltar para Categorias
-        </Button>
+    <div className="container mx-auto max-w-7xl">
+      <div className="mb-6 flex items-center">
+        <Link to="/licoes" className="flex items-center text-muted-foreground hover:text-foreground mr-4">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          <span>Voltar</span>
+        </Link>
         <h1 className="text-2xl font-display font-bold">Lições para Iniciantes (A1-A2)</h1>
       </div>
       
+      <p className="text-muted-foreground mb-8">
+        Estas lições são perfeitas para quem está começando a aprender inglês. 
+        Você irá aprender vocabulário essencial e estruturas gramaticais básicas.
+      </p>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {beginnerLessons.map((lesson) => (
-          <Card key={lesson.id} className={`hover:shadow-md transition-all ${lesson.completed ? 'border-l-4 border-l-accent' : ''}`}>
+          <Card key={lesson.id} className="hover:shadow-md transition-all">
             <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                    {lesson.level}
-                  </span>
-                  {lesson.completed && (
-                    <span className="text-accent">
-                      <CheckCircle className="h-4 w-4" />
-                    </span>
-                  )}
-                </div>
-                <span className="text-primary font-medium">+{lesson.xp} XP</span>
-              </div>
-              <CardTitle className="mt-2">{lesson.title}</CardTitle>
-              <CardDescription>{lesson.description}</CardDescription>
+              <CardTitle>{lesson.title}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                <Clock className="h-4 w-4" />
-                <span>{lesson.duration} minutos</span>
+              <p className="mb-4 text-muted-foreground">{lesson.description}</p>
+              
+              <div className="flex items-center justify-between text-sm mb-4">
+                <div className="flex items-center text-muted-foreground">
+                  <Clock className="h-4 w-4 mr-1" />
+                  <span>{lesson.duration} minutos</span>
+                </div>
+                
+                {lesson.progress === 100 && (
+                  <div className="flex items-center text-green-600">
+                    <CheckCircle className="h-4 w-4 mr-1" />
+                    <span>Concluído</span>
+                  </div>
+                )}
               </div>
               
-              {lesson.topics && (
-                <div className="mb-4">
-                  <p className="text-sm font-medium mb-2">Tópicos:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {lesson.topics.map((topic, index) => (
-                      <span key={index} className="text-xs px-2 py-1 bg-muted rounded-full">
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
+              <div className="mb-4">
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Progresso</span>
+                  <span>{lesson.progress}%</span>
                 </div>
-              )}
+                <ProgressIndicator value={lesson.progress} max={100} />
+              </div>
               
-              <Button as={Link} to={`/licoes/licao/${lesson.id}`} className="w-full mt-2">
-                {lesson.completed ? "Revisar Lição" : "Iniciar Lição"}
-              </Button>
+              {lesson.locked ? (
+                <Button disabled className="w-full flex items-center justify-center opacity-70">
+                  <Lock className="h-4 w-4 mr-2" />
+                  <span>Bloqueado</span>
+                </Button>
+              ) : (
+                isLoggedIn ? (
+                  <Button as={Link} to={`/licoes/licao/${lesson.id}`} className="w-full">
+                    {lesson.progress > 0 ? 'Continuar' : 'Iniciar'} Lição
+                  </Button>
+                ) : (
+                  <Button as={Link} to="/login" className="w-full flex items-center justify-center bg-primary/80 hover:bg-primary">
+                    <Lock className="h-4 w-4 mr-2" />
+                    <span>Login para Acessar</span>
+                  </Button>
+                )
+              )}
             </CardContent>
           </Card>
         ))}
+      </div>
+      
+      <div className="mt-8 flex justify-center">
+        <Button variant="subtle">Carregar Mais Lições</Button>
       </div>
     </div>
   );
@@ -136,8 +133,8 @@ const LessonsList = () => {
 const BeginnerLessons = () => {
   return (
     <Routes>
-      <Route path="/" element={<LessonsList />} />
-      <Route path="/:lessonId" element={<LessonContent />} />
+      <Route path="/" element={<BeginnerLessonsOverview />} />
+      <Route path="/licao/:id" element={<LessonContent />} />
     </Routes>
   );
 };

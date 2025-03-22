@@ -30,11 +30,6 @@ const Admin = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  // Corrigindo o tipo de função para compatibilidade com o componente AdminSidebar
-  const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab);
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <AdminHeader 
@@ -45,13 +40,13 @@ const Admin = () => {
       <div className="flex">
         <AdminSidebar 
           activeTab={activeTab} 
-          setActiveTab={handleTabChange} 
+          setActiveTab={setActiveTab} 
           mobileMenuOpen={mobileMenuOpen} 
         />
         <main className="flex-1 p-6 md:ml-64">
           {activeTab === "dashboard" && (
             <DashboardTab 
-              setActiveTab={handleTabChange}
+              setActiveTab={setActiveTab}
               usersData={usersData}
               lessonsData={lessonsData}
               analyticsData={analyticsData}
