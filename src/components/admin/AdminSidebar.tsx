@@ -16,7 +16,7 @@ type TabType = "dashboard" | "users" | "lessons" | "activities" | "forum" | "ana
 
 interface AdminSidebarProps {
   activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
+  setActiveTab: (tab: TabType) => void;  // Corrigido o tipo aqui
   mobileMenuOpen: boolean;
 }
 
