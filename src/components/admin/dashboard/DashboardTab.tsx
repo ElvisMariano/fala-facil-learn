@@ -4,8 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom
 import { Button } from "@/components/ui/custom/Button";
 import { Users, BookOpen, CheckCircle, MessageSquare, Settings, AlertCircle } from "lucide-react";
 
+// Define the TabType to match the one in Admin.tsx
+type TabType = "dashboard" | "users" | "lessons" | "activities" | "forum" | "analytics" | "settings";
+
 interface DashboardTabProps {
-  setActiveTab: (tab: string) => void;
+  setActiveTab: (tab: TabType) => void;
   usersData: any[];
   lessonsData: any[];
   analyticsData: any;

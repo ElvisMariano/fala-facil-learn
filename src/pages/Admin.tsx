@@ -30,6 +30,11 @@ const Admin = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
+  // Create a type-safe handler for setting the active tab from string values
+  const handleSetActiveTab = (tab: TabType) => {
+    setActiveTab(tab);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <AdminHeader 
@@ -46,7 +51,7 @@ const Admin = () => {
         <main className="flex-1 p-6 md:ml-64">
           {activeTab === "dashboard" && (
             <DashboardTab 
-              setActiveTab={setActiveTab}
+              setActiveTab={handleSetActiveTab}
               usersData={usersData}
               lessonsData={lessonsData}
               analyticsData={analyticsData}
