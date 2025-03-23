@@ -377,7 +377,7 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
         </h1>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-10 items-center mb-10">
         {/* Flashcard display */}
         <div className="relative h-[400px] perspective">
           <AnimatePresence mode="wait">
@@ -391,14 +391,15 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
               animate={{ 
                 x: 0, 
                 opacity: 1, 
-                rotateY: isFlipped ? 180 : 0 
+                rotateY: isFlipped ? 360 : 0,
+                scale: isFlipped ? 1.05 : 1
               }}
               exit={{ 
                 x: direction * -50, 
                 opacity: 0,
                 rotateY: isFlipped ? 180 : 0 
               }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.6 }}
               className="absolute inset-0 cursor-pointer preserve-3d"
               onClick={flipCard}
             >
@@ -451,7 +452,7 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
                       className="flex items-center gap-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePlayAudio(currentCard.example);
+                        handlePlayAudio(currentCard.front);
                       }}
                     >
                       <Volume2 className="h-4 w-4" />
@@ -463,7 +464,7 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
                       className="flex items-center gap-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePlayAudio(currentCard.example, true);
+                        handlePlayAudio(currentCard.front, true);
                       }}
                     >
                       <VolumeX className="h-4 w-4" />
@@ -476,6 +477,47 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
           </AnimatePresence>
         </div>
         
+      
+      {/* Flashcard controls */}
+      <div className="flex justify-center mb-1 gap-1">
+        <Button variant="outline" size="sm" onClick={prevCard} disabled={currentIndex === 0}>
+          <ChevronLeft className="h-8 w-12" />
+        </Button>
+        {/* <Button variant="outline" size="sm" onClick={flipCard}>
+          <RefreshCw className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" onClick={nextCard} disabled={currentIndex === sampleFlashcards.length - 1}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>*/}
+      </div>
+      
+      {/* Difficulty buttons */}
+      <div className="flex justify-center gap-2 mb-1">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="border-destructive text-destructive hover:bg-destructive/100"
+          onClick={() => markDifficulty('hard')}
+        >
+          <X className="h-4 w-4 mr-1" /> Difícil
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="border-primary text-primary hover:bg-primary/100"
+          onClick={() => markDifficulty('medium')}
+        >
+          Médio
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="border-accent text-accent hover:bg-accent/100"
+          onClick={() => markDifficulty('easy')}
+        >
+          <CheckCircle className="h-4 w-4 mr-1" /> Fácil
+        </Button>
+      </div>
         {/* Study information */}
         <div>
           <Card>
@@ -510,47 +552,6 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
             </CardContent>
           </Card>
         </div>
-      </div>
-      
-      {/* Flashcard controls */}
-      <div className="flex justify-center mb-4 gap-4">
-        <Button variant="outline" size="sm" onClick={prevCard} disabled={currentIndex === 0}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button variant="outline" size="sm" onClick={flipCard}>
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-        <Button variant="outline" size="sm" onClick={nextCard} disabled={currentIndex === sampleFlashcards.length - 1}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      {/* Difficulty buttons */}
-      <div className="flex justify-center gap-4">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="border-destructive text-destructive hover:bg-destructive/10"
-          onClick={() => markDifficulty('hard')}
-        >
-          <X className="h-4 w-4 mr-1" /> Difícil
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="border-primary text-primary hover:bg-primary/10"
-          onClick={() => markDifficulty('medium')}
-        >
-          Médio
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="border-accent text-accent hover:bg-accent/10"
-          onClick={() => markDifficulty('easy')}
-        >
-          <CheckCircle className="h-4 w-4 mr-1" /> Fácil
-        </Button>
       </div>
     </div>
   );
