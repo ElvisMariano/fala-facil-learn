@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/custom/Button";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   // Handle scroll effect
   useEffect(() => {
@@ -26,6 +27,14 @@ const Header = () => {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "auto";
+    }
+  };
+
+  // Handle navigation
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (mobileMenuOpen) {
+      toggleMobileMenu();
     }
   };
 
@@ -69,10 +78,10 @@ const Header = () => {
 
           {/* Authentication Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="subtle" size="sm" as={Link} to="/login">
+            <Button variant="subtle" size="sm" onClick={() => handleNavigation("/login")}>
               Login
             </Button>
-            <Button size="sm" as={Link} to="/registro">
+            <Button size="sm" onClick={() => handleNavigation("/registro")}>
               Sign up
             </Button>
           </div>
@@ -100,25 +109,25 @@ const Header = () => {
         )}
       >
         <nav className="flex flex-col space-y-6">
-          <Link to="/licoes" className="text-lg font-medium py-2 border-b border-muted" onClick={toggleMobileMenu}>
+          <div className="text-lg font-medium py-2 border-b border-muted" onClick={() => handleNavigation("/licoes")}>
             Lessons
-          </Link>
-          <Link to="/flashcards" className="text-lg font-medium py-2 border-b border-muted" onClick={toggleMobileMenu}>
+          </div>
+          <div className="text-lg font-medium py-2 border-b border-muted" onClick={() => handleNavigation("/flashcards")}>
             Flashcards
-          </Link>
-          <Link to="/progresso" className="text-lg font-medium py-2 border-b border-muted" onClick={toggleMobileMenu}>
+          </div>
+          <div className="text-lg font-medium py-2 border-b border-muted" onClick={() => handleNavigation("/progresso")}>
             Progress
-          </Link>
-          <Link to="/comunidade" className="text-lg font-medium py-2 border-b border-muted" onClick={toggleMobileMenu}>
+          </div>
+          <div className="text-lg font-medium py-2 border-b border-muted" onClick={() => handleNavigation("/comunidade")}>
             Community
-          </Link>
+          </div>
         </nav>
         
         <div className="mt-8 flex flex-col space-y-4">
-          <Button variant="subtle" width="full" as={Link} to="/login" onClick={toggleMobileMenu}>
+          <Button variant="subtle" width="full" onClick={() => handleNavigation("/login")}>
             Login
           </Button>
-          <Button width="full" as={Link} to="/registro" onClick={toggleMobileMenu}>
+          <Button width="full" onClick={() => handleNavigation("/registro")}>
             Sign up
           </Button>
         </div>
@@ -135,6 +144,11 @@ interface NavigationItemProps {
 
 const NavigationItem = ({ label, href, children }: NavigationItemProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(href);
+  };
 
   if (children) {
     return (
@@ -143,13 +157,16 @@ const NavigationItem = ({ label, href, children }: NavigationItemProps) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <Link to={href} className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors">
+        <div 
+          onClick={handleClick}
+          className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors cursor-pointer"
+        >
           <span>{label}</span>
           <ChevronDown className={cn(
             "h-4 w-4 transition-transform", 
             isHovered && "rotate-180"
           )} />
-        </Link>
+        </div>
         
         {isHovered && (
           <div className="absolute top-full left-0 pt-2 z-10 animate-fade-in">
@@ -161,9 +178,12 @@ const NavigationItem = ({ label, href, children }: NavigationItemProps) => {
   }
   
   return (
-    <Link to={href} className="text-foreground hover:text-primary transition-colors">
+    <div 
+      onClick={handleClick}
+      className="text-foreground hover:text-primary transition-colors cursor-pointer"
+    >
       {label}
-    </Link>
+    </div>
   );
 };
 

@@ -1,8 +1,9 @@
 
 import { Button } from "@/components/ui/custom/Button";
 import { useState, useEffect } from "react";
-import { Volume2, RefreshCw, ArrowLeft, ArrowRight, Check, X } from "lucide-react";
+import { Volume2, RefreshCw, ArrowLeft, ArrowRight, Check, X, VolumeX } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { playAudio } from "@/utils/audioUtils";
 
 // Sample flashcard data
 const flashcards = [
@@ -69,6 +70,14 @@ const FlashcardDemo = () => {
         setIsFlipped(false);
         setExiting(false);
       }, 300);
+    }
+  };
+
+  const handlePlayAudio = async (text: string, slow: boolean = false) => {
+    try {
+      await playAudio(text, 'en-US', 0.9, slow);
+    } catch (error) {
+      console.error("Erro ao reproduzir áudio:", error);
     }
   };
   
@@ -147,22 +156,46 @@ const FlashcardDemo = () => {
                   </div>
                   <p className="text-4xl font-display font-bold mb-4">{currentCard.front}</p>
                   <p className="text-sm text-muted-foreground mb-6">Click to flip</p>
-                  <Button variant="subtle" size="sm" className="flex items-center gap-2">
-                    <Volume2 className="h-4 w-4" />
-                    <span>Listen</span>
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="subtle" size="sm" className="flex items-center gap-2" onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayAudio(currentCard.front);
+                    }}>
+                      <Volume2 className="h-4 w-4" />
+                      <span>Listen</span>
+                    </Button>
+                    <Button variant="subtle" size="sm" className="flex items-center gap-2" onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayAudio(currentCard.front, true);
+                    }}>
+                      <VolumeX className="h-4 w-4" />
+                      <span>Slow</span>
+                    </Button>
+                  </div>
                 </div>
                 
                 {/* Card back */}
-                <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-primary/5 border border-primary/20 rotateY-180 ${isFlipped ? 'opacity-100' : 'opacity-0'}`}>
-                  <p className="text-4xl font-display font-bold mb-6">{currentCard.back}</p>
-                  <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6">
+                <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-primary/5 border border-primary/20 rotateY-180 ${isFlipped ? 'opacity-100' : 'opacity-0'}`} style={{ transform: 'rotateY(180deg)' }}>
+                  <p className="text-4xl font-display font-bold mb-6" style={{ transform: 'rotateY(180deg)' }}>{currentCard.back}</p>
+                  <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6" style={{ transform: 'rotateY(180deg)' }}>
                     <p className="text-sm text-muted-foreground italic">"{currentCard.example}"</p>
                   </div>
-                  <Button variant="subtle" size="sm" className="flex items-center gap-2">
-                    <Volume2 className="h-4 w-4" />
-                    <span>Listen</span>
-                  </Button>
+                  <div className="flex gap-2" style={{ transform: 'rotateY(180deg)' }}>
+                    <Button variant="subtle" size="sm" className="flex items-center gap-2" onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayAudio(currentCard.example);
+                    }}>
+                      <Volume2 className="h-4 w-4" />
+                      <span>Listen</span>
+                    </Button>
+                    <Button variant="subtle" size="sm" className="flex items-center gap-2" onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayAudio(currentCard.example, true);
+                    }}>
+                      <VolumeX className="h-4 w-4" />
+                      <span>Slow</span>
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             </AnimatePresence>

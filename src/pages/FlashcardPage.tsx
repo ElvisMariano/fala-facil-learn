@@ -4,8 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/custom/Button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { Volume2, RefreshCw, CheckCircle, X, ChevronLeft, ChevronRight, Plus, Search, BarChart3 } from "lucide-react";
+import { Volume2, RefreshCw, CheckCircle, X, ChevronLeft, ChevronRight, Search, BarChart3, VolumeX } from "lucide-react";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { playAudio } from "@/utils/audioUtils";
+import { toast } from "sonner";
 
 // Sample flashcard decks data
 const flashcardDecks = [
@@ -17,7 +20,10 @@ const flashcardDecks = [
     level: "A1",
     progress: 75,
     color: "from-green-500 to-emerald-600",
-    lastPracticed: "2023-07-12T15:30:00"
+    lastPracticed: "2023-07-12T15:30:00",
+    nextReview: "2023-07-17T10:00:00",
+    availableForReview: true,
+    locked: false
   },
   {
     id: "travel-phrases",
@@ -27,7 +33,10 @@ const flashcardDecks = [
     level: "A2",
     progress: 40,
     color: "from-blue-500 to-indigo-600",
-    lastPracticed: "2023-07-10T09:20:00"
+    lastPracticed: "2023-07-10T09:20:00",
+    nextReview: "2023-07-15T14:30:00",
+    availableForReview: true,
+    locked: false
   },
   {
     id: "business-english",
@@ -37,7 +46,10 @@ const flashcardDecks = [
     level: "B1-B2",
     progress: 25,
     color: "from-purple-500 to-violet-600",
-    lastPracticed: "2023-07-05T14:15:00"
+    lastPracticed: "2023-07-05T14:15:00",
+    nextReview: "2023-07-18T09:00:00",
+    availableForReview: false,
+    locked: false
   },
   {
     id: "phrasal-verbs",
@@ -47,7 +59,10 @@ const flashcardDecks = [
     level: "B2",
     progress: 15,
     color: "from-amber-500 to-orange-600",
-    lastPracticed: "2023-06-28T10:45:00"
+    lastPracticed: "2023-06-28T10:45:00",
+    nextReview: "2023-07-14T11:15:00",
+    availableForReview: true,
+    locked: false
   },
   {
     id: "idioms",
@@ -57,7 +72,10 @@ const flashcardDecks = [
     level: "C1",
     progress: 5,
     color: "from-red-500 to-rose-600",
-    lastPracticed: "2023-06-15T16:30:00"
+    lastPracticed: "2023-06-15T16:30:00",
+    nextReview: "2023-08-01T16:30:00",
+    availableForReview: false,
+    locked: true
   },
 ];
 
@@ -124,6 +142,17 @@ const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) =
     deck.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
+  // Format date for next review
+  const formatNextReview = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
   return (
     <div className="container mx-auto max-w-7xl py-10">
       <div className="flex flex-col md:flex-row justify-between items-start mb-8 gap-4">
@@ -146,7 +175,7 @@ const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) =
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredDecks.map((deck) => (
-          <Card key={deck.id} className="h-full hover:shadow-lg transition-all overflow-hidden flex flex-col">
+          <Card key={deck.id} className={`h-full hover:shadow-lg transition-all overflow-hidden flex flex-col ${deck.locked ? 'opacity-70' : ''}`}>
             <div className={`h-3 w-full bg-gradient-to-r ${deck.color}`}></div>
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -177,27 +206,35 @@ const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) =
                     minute: '2-digit'
                   })}
                 </div>
+                
+                {!deck.availableForReview && (
+                  <div className="text-xs text-primary font-medium">
+                    Próxima revisão: {formatNextReview(deck.nextReview)}
+                  </div>
+                )}
               </div>
               
               <div className="flex gap-2">
-                <Button className="flex-1" onClick={() => onStartStudy(deck.id)}>Estudar</Button>
+                <Button 
+                  className="flex-1" 
+                  onClick={() => onStartStudy(deck.id)}
+                  disabled={!deck.availableForReview || deck.locked}
+                >
+                  {deck.locked ? 'Bloqueado' : (deck.availableForReview ? 'Estudar' : 'Indisponível')}
+                </Button>
                 <Button variant="outline" className="px-3">
                   <BarChart3 className="h-4 w-4" />
                 </Button>
               </div>
+              
+              {deck.locked && (
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  Este deck será desbloqueado quando você alcançar o nível adequado.
+                </p>
+              )}
             </CardContent>
           </Card>
         ))}
-        
-        {/* Add New Deck Card */}
-        <Card className="h-full border-dashed hover:shadow-lg transition-all overflow-hidden flex flex-col justify-center items-center py-10">
-          <Plus className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">Criar Novo Deck</h3>
-          <p className="text-muted-foreground text-center mb-6 max-w-xs">
-            Crie um novo conjunto de flashcards personalizado para seus estudos.
-          </p>
-          <Button>Criar Deck</Button>
-        </Card>
       </div>
     </div>
   );
@@ -208,6 +245,8 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
   const [isFlipped, setIsFlipped] = useState(false);
   const [direction, setDirection] = useState(0);
   const [exiting, setExiting] = useState(false);
+  const [completedCards, setCompletedCards] = useState<number[]>([]);
+  const [isCompleted, setIsCompleted] = useState(false);
   
   const currentCard = sampleFlashcards[currentIndex];
   
@@ -224,6 +263,9 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
         setIsFlipped(false);
         setExiting(false);
       }, 300);
+    } else if (!isCompleted) {
+      // Session complete
+      setIsCompleted(true);
     }
   };
   
@@ -242,17 +284,86 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
   const markDifficulty = (difficulty: string) => {
     // In a real app, this would update the card's difficulty and schedule the next review
     console.log(`Card ${currentCard.id} marked as ${difficulty}`);
-    nextCard();
-  };
-
-  const playAudio = (text: string) => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
+    
+    const updatedCompletedCards = [...completedCards];
+    if (!updatedCompletedCards.includes(currentCard.id)) {
+      updatedCompletedCards.push(currentCard.id);
+    }
+    setCompletedCards(updatedCompletedCards);
+    
+    if (currentIndex < sampleFlashcards.length - 1) {
+      nextCard();
+    } else if (updatedCompletedCards.length === sampleFlashcards.length) {
+      // All cards reviewed
+      setIsCompleted(true);
     }
   };
+
+  const handlePlayAudio = async (text: string, slow: boolean = false) => {
+    try {
+      await playAudio(text, 'en-US', 0.9, slow);
+    } catch (error) {
+      console.error("Erro ao reproduzir áudio:", error);
+      toast.error("Erro ao reproduzir áudio. Verifique as configurações do seu navegador.");
+    }
+  };
+  
+  // Calculate next review date for completed cards
+  const getNextReviewDate = (difficulty: string) => {
+    const now = new Date();
+    let daysToAdd = 1;
+    
+    switch (difficulty) {
+      case 'easy':
+        daysToAdd = 7;
+        break;
+      case 'medium':
+        daysToAdd = 3;
+        break;
+      case 'hard':
+        daysToAdd = 1;
+        break;
+      default:
+        daysToAdd = 1;
+    }
+    
+    now.setDate(now.getDate() + daysToAdd);
+    return now.toLocaleDateString('pt-BR', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+  
+  if (isCompleted) {
+    return (
+      <div className="container mx-auto max-w-5xl py-10">
+        <Card className="p-8 text-center">
+          <CardTitle className="text-2xl font-display mb-6">🎉 Parabéns! Sessão Concluída</CardTitle>
+          <CardContent className="space-y-6">
+            <p className="text-lg">Você revisou {completedCards.length} cartões nesta sessão!</p>
+            
+            <div className="p-6 bg-muted/20 rounded-lg">
+              <h3 className="font-medium mb-4">Próximas revisões:</h3>
+              <div className="space-y-2">
+                {sampleFlashcards.map(card => (
+                  <div key={card.id} className="flex justify-between items-center p-2 border-b">
+                    <span className="font-medium">{card.front}</span>
+                    <span>Próxima revisão: {getNextReviewDate(card.difficulty)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <Button onClick={onBackToDeck} className="mt-4">
+              Voltar para Decks
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto max-w-5xl py-10">
@@ -298,38 +409,66 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
                 </div>
                 <p className="text-4xl font-display font-bold mb-4">{currentCard.front}</p>
                 <p className="text-sm text-muted-foreground mb-6">Clique para virar</p>
-                <Button 
-                  variant="subtle" 
-                  size="sm" 
-                  className="flex items-center gap-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    playAudio(currentCard.front);
-                  }}
-                >
-                  <Volume2 className="h-4 w-4" />
-                  <span>Ouvir</span>
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="subtle" 
+                    size="sm" 
+                    className="flex items-center gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayAudio(currentCard.front);
+                    }}
+                  >
+                    <Volume2 className="h-4 w-4" />
+                    <span>Ouvir</span>
+                  </Button>
+                  <Button 
+                    variant="subtle" 
+                    size="sm" 
+                    className="flex items-center gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayAudio(currentCard.front, true);
+                    }}
+                  >
+                    <VolumeX className="h-4 w-4" />
+                    <span>Ouvir Lento</span>
+                  </Button>
+                </div>
               </div>
               
               {/* Card back */}
-              <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-primary/5 border border-primary/20 rotateY-180 ${isFlipped ? 'opacity-100' : 'opacity-0'}`}>
-                <p className="text-4xl font-display font-bold mb-6">{currentCard.back}</p>
-                <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6">
+              <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-primary/5 border border-primary/20 rotateY-180 ${isFlipped ? 'opacity-100' : 'opacity-0'}`} style={{ transform: 'rotateY(180deg)' }}>
+                <p className="text-4xl font-display font-bold mb-6" style={{ transform: 'rotateY(180deg)' }}>{currentCard.back}</p>
+                <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6" style={{ transform: 'rotateY(180deg)' }}>
                   <p className="text-sm text-muted-foreground italic">"{currentCard.example}"</p>
                 </div>
-                <Button 
-                  variant="subtle" 
-                  size="sm" 
-                  className="flex items-center gap-2"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    playAudio(currentCard.example);
-                  }}
-                >
-                  <Volume2 className="h-4 w-4" />
-                  <span>Ouvir</span>
-                </Button>
+                <div className="flex gap-2" style={{ transform: 'rotateY(180deg)' }}>
+                  <Button 
+                    variant="subtle" 
+                    size="sm" 
+                    className="flex items-center gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayAudio(currentCard.example);
+                    }}
+                  >
+                    <Volume2 className="h-4 w-4" />
+                    <span>Ouvir</span>
+                  </Button>
+                  <Button 
+                    variant="subtle" 
+                    size="sm" 
+                    className="flex items-center gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePlayAudio(currentCard.example, true);
+                    }}
+                  >
+                    <VolumeX className="h-4 w-4" />
+                    <span>Ouvir Lento</span>
+                  </Button>
+                </div>
               </div>
             </motion.div>
           </AnimatePresence>
@@ -345,6 +484,13 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                <div 
+                  className="h-full bg-primary rounded-full"
+                  style={{ width: `${(completedCards.length / sampleFlashcards.length) * 100}%` }}
+                ></div>
+              </div>
+              
               <div>
                 <h3 className="text-sm font-medium mb-2">Como funciona:</h3>
                 <p className="text-sm text-muted-foreground">
@@ -413,6 +559,17 @@ const FlashcardPage = () => {
   const [activeDeckId, setActiveDeckId] = useState("");
   
   const handleStartStudy = (deckId: string) => {
+    const deck = flashcardDecks.find(d => d.id === deckId);
+    if (deck && !deck.availableForReview) {
+      toast.info(`Este deck não está disponível para estudo no momento. Próxima revisão: ${new Date(deck.nextReview).toLocaleDateString('pt-BR')}`);
+      return;
+    }
+    
+    if (deck && deck.locked) {
+      toast.error("Este deck está bloqueado. Complete os níveis anteriores para desbloqueá-lo.");
+      return;
+    }
+    
     setActiveDeckId(deckId);
     setActiveView("study");
   };
