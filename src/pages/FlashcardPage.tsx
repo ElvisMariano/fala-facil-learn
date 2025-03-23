@@ -115,7 +115,7 @@ const sampleFlashcards = [
   },
 ];
 
-const FlashcardDecksList = () => {
+const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) => void }) => {
   const [searchTerm, setSearchTerm] = useState("");
   
   // Filter decks based on search term
@@ -180,7 +180,7 @@ const FlashcardDecksList = () => {
               </div>
               
               <div className="flex gap-2">
-                <Button className="flex-1">Estudar</Button>
+                <Button className="flex-1" onClick={() => onStartStudy(deck.id)}>Estudar</Button>
                 <Button variant="outline" className="px-3">
                   <BarChart3 className="h-4 w-4" />
                 </Button>
@@ -203,7 +203,7 @@ const FlashcardDecksList = () => {
   );
 };
 
-const FlashcardStudy = () => {
+const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, deckId: string }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [direction, setDirection] = useState(0);
@@ -244,15 +244,26 @@ const FlashcardStudy = () => {
     console.log(`Card ${currentCard.id} marked as ${difficulty}`);
     nextCard();
   };
+
+  const playAudio = (text: string) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
   
   return (
     <div className="container mx-auto max-w-5xl py-10">
       <div className="flex items-center mb-8">
-        <Button variant="ghost" size="sm" className="mr-4">
+        <Button variant="ghost" size="sm" className="mr-4" onClick={onBackToDeck}>
           <ChevronLeft className="mr-1 h-4 w-4" />
           Voltar para Decks
         </Button>
-        <h1 className="text-2xl font-display font-bold">Vocabulário Básico</h1>
+        <h1 className="text-2xl font-display font-bold">
+          {flashcardDecks.find(deck => deck.id === deckId)?.title || "Vocabulário"}
+        </h1>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center mb-10">
@@ -287,7 +298,15 @@ const FlashcardStudy = () => {
                 </div>
                 <p className="text-4xl font-display font-bold mb-4">{currentCard.front}</p>
                 <p className="text-sm text-muted-foreground mb-6">Clique para virar</p>
-                <Button variant="subtle" size="sm" className="flex items-center gap-2">
+                <Button 
+                  variant="subtle" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playAudio(currentCard.front);
+                  }}
+                >
                   <Volume2 className="h-4 w-4" />
                   <span>Ouvir</span>
                 </Button>
@@ -299,7 +318,15 @@ const FlashcardStudy = () => {
                 <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6">
                   <p className="text-sm text-muted-foreground italic">"{currentCard.example}"</p>
                 </div>
-                <Button variant="subtle" size="sm" className="flex items-center gap-2">
+                <Button 
+                  variant="subtle" 
+                  size="sm" 
+                  className="flex items-center gap-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playAudio(currentCard.example);
+                  }}
+                >
                   <Volume2 className="h-4 w-4" />
                   <span>Ouvir</span>
                 </Button>
@@ -383,6 +410,16 @@ const FlashcardStudy = () => {
 
 const FlashcardPage = () => {
   const [activeView, setActiveView] = useState("decks"); // "decks" or "study"
+  const [activeDeckId, setActiveDeckId] = useState("");
+  
+  const handleStartStudy = (deckId: string) => {
+    setActiveDeckId(deckId);
+    setActiveView("study");
+  };
+  
+  const handleBackToDeck = () => {
+    setActiveView("decks");
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -390,9 +427,9 @@ const FlashcardPage = () => {
       
       <main className="flex-1 py-6 px-6">
         {activeView === "decks" ? (
-          <FlashcardDecksList />
+          <FlashcardDecksList onStartStudy={handleStartStudy} />
         ) : (
-          <FlashcardStudy />
+          <FlashcardStudy onBackToDeck={handleBackToDeck} deckId={activeDeckId} />
         )}
       </main>
       

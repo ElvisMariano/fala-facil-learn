@@ -49,30 +49,32 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <NavigationItem label="Lessons" href="/lessons">
+            <NavigationItem label="Lessons" href="/licoes">
               <div className="rounded-lg bg-white p-4 shadow-lg w-64 grid gap-2">
-                <Link to="/lessons/beginner" className="block p-2 hover:bg-muted rounded-md transition-colors">
+                <Link to="/licoes/iniciante" className="block p-2 hover:bg-muted rounded-md transition-colors">
                   Beginner (A1-A2)
                 </Link>
-                <Link to="/lessons/intermediate" className="block p-2 hover:bg-muted rounded-md transition-colors">
+                <Link to="/licoes/intermediario" className="block p-2 hover:bg-muted rounded-md transition-colors">
                   Intermediate (B1-B2)
                 </Link>
-                <Link to="/lessons/advanced" className="block p-2 hover:bg-muted rounded-md transition-colors">
+                <Link to="/licoes/avancado" className="block p-2 hover:bg-muted rounded-md transition-colors">
                   Advanced (C1-C2)
                 </Link>
               </div>
             </NavigationItem>
             <NavigationItem label="Flashcards" href="/flashcards" />
-            <NavigationItem label="Progress" href="/progress" />
-            <NavigationItem label="Community" href="/community" />
+            <NavigationItem label="Progress" href="/progresso" />
+            <NavigationItem label="Community" href="/comunidade" />
           </nav>
 
           {/* Authentication Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="subtle" size="sm">
+            <Button variant="subtle" size="sm" as={Link} to="/login">
               Login
             </Button>
-            <Button size="sm">Sign up</Button>
+            <Button size="sm" as={Link} to="/registro">
+              Sign up
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -98,25 +100,25 @@ const Header = () => {
         )}
       >
         <nav className="flex flex-col space-y-6">
-          <Link to="/lessons" className="text-lg font-medium py-2 border-b border-muted">
+          <Link to="/licoes" className="text-lg font-medium py-2 border-b border-muted" onClick={toggleMobileMenu}>
             Lessons
           </Link>
-          <Link to="/flashcards" className="text-lg font-medium py-2 border-b border-muted">
+          <Link to="/flashcards" className="text-lg font-medium py-2 border-b border-muted" onClick={toggleMobileMenu}>
             Flashcards
           </Link>
-          <Link to="/progress" className="text-lg font-medium py-2 border-b border-muted">
+          <Link to="/progresso" className="text-lg font-medium py-2 border-b border-muted" onClick={toggleMobileMenu}>
             Progress
           </Link>
-          <Link to="/community" className="text-lg font-medium py-2 border-b border-muted">
+          <Link to="/comunidade" className="text-lg font-medium py-2 border-b border-muted" onClick={toggleMobileMenu}>
             Community
           </Link>
         </nav>
         
         <div className="mt-8 flex flex-col space-y-4">
-          <Button variant="subtle" width="full">
+          <Button variant="subtle" width="full" as={Link} to="/login" onClick={toggleMobileMenu}>
             Login
           </Button>
-          <Button width="full">
+          <Button width="full" as={Link} to="/registro" onClick={toggleMobileMenu}>
             Sign up
           </Button>
         </div>
@@ -141,13 +143,13 @@ const NavigationItem = ({ label, href, children }: NavigationItemProps) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <button className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors">
+        <Link to={href} className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors">
           <span>{label}</span>
           <ChevronDown className={cn(
             "h-4 w-4 transition-transform", 
             isHovered && "rotate-180"
           )} />
-        </button>
+        </Link>
         
         {isHovered && (
           <div className="absolute top-full left-0 pt-2 z-10 animate-fade-in">
