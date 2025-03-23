@@ -143,7 +143,7 @@ const FlashcardDemo = () => {
                 exit={{ 
                   x: direction * -50, 
                   opacity: 0,
-                  rotateY: isFlipped ? -180 : 0 
+                  rotateY: isFlipped ? 180 : 0 
                 }}
                 transition={{ duration: 0.3 }}
                 className="absolute inset-0 cursor-pointer preserve-3d"
@@ -176,7 +176,7 @@ const FlashcardDemo = () => {
                 
                 {/* Card back */}
                 <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-primary/5 border border-primary/20 ${isFlipped ? 'opacity-100' : 'opacity-0'}`} style={{ transform: 'rotateY(180deg)' }}>
-                  <div style={{ transform: 'rotateY(180deg)' }} className="flex flex-col items-center justify-center w-full h-full">
+                  <div className="flex flex-col items-center justify-center w-full h-full transform-style-3d">
                     <p className="text-4xl font-display font-bold mb-6">{currentCard.back}</p>
                     <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6">
                       <p className="text-sm text-muted-foreground italic">"{currentCard.example}"</p>

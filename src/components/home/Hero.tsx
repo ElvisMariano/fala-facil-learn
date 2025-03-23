@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { MousePointerClick, ArrowRight } from "lucide-react";
 
 const phrases = [
-  "Speak English fluently",
-  "Learn at your own pace",
-  "Practice with confidence",
-  "Master new vocabulary",
-  "Improve your pronunciation",
+  "Fale inglês com fluência",
+  "Aprenda no seu próprio ritmo",
+  "Pratique com confiança",
+  "Domine novo vocabulário",
+  "Melhore sua pronúncia",
 ];
 
 const Hero = () => {
@@ -63,11 +63,11 @@ const Hero = () => {
             <div>
               <div className="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">
                 <MousePointerClick className="h-3 w-3 mr-1" />
-                Interactive Language Learning
+                Aprendizado Interativo de Idiomas
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-bold tracking-tight text-edge mb-4">
-                Learn English the <br />
-                <span className="text-primary">Easy Way</span>
+                Aprenda inglês de <br />
+                <span className="text-primary">Forma Fácil</span>
               </h1>
               <div className="h-12 flex items-center">
                 <h2 className="text-xl md:text-2xl font-medium text-muted-foreground">
@@ -81,16 +81,16 @@ const Hero = () => {
             </div>
             
             <p className="text-muted-foreground max-w-xl">
-              Our interactive platform combines effective learning methodologies with modern technology to help you learn English with confidence and ease.
+              Nossa plataforma interativa combina metodologias eficazes de aprendizado com tecnologia moderna para ajudar você a aprender inglês com confiança e facilidade.
             </p>
             
             <div className="flex flex-wrap gap-4">
               <Button size="lg" className="gap-2">
-                Start Learning
+                Começar a Aprender
                 <ArrowRight className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="lg">
-                Explore Lessons
+                Explorar Lições
               </Button>
             </div>
             
@@ -101,7 +101,7 @@ const Hero = () => {
                 ))}
               </div>
               <p>
-                <span className="font-medium text-foreground">10,000+</span> students already learning
+                <span className="font-medium text-foreground">10.000+</span> alunos já aprendendo
               </p>
             </div>
           </div>
@@ -112,8 +112,8 @@ const Hero = () => {
             <div className="glass rounded-xl px-6 py-8 shadow-lg transform -rotate-2">
               <div className="flex justify-between items-center mb-8">
                 <div>
-                  <h3 className="text-lg font-medium">Daily Streak</h3>
-                  <p className="text-muted-foreground text-sm">Keep learning to maintain your streak</p>
+                  <h3 className="text-lg font-medium">Sequência Diária</h3>
+                  <p className="text-muted-foreground text-sm">Continue aprendendo para manter sua sequência</p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-medium">
                   7
@@ -127,8 +127,8 @@ const Hero = () => {
                       1
                     </div>
                     <div>
-                      <p className="font-medium">Basic Greetings</p>
-                      <p className="text-xs text-muted-foreground">10 minutes</p>
+                      <p className="font-medium">Saudações Básicas</p>
+                      <p className="text-xs text-muted-foreground">10 minutos</p>
                     </div>
                   </div>
                   <div className="h-3 w-3 rounded-full bg-accent animate-pulse" />
@@ -140,8 +140,8 @@ const Hero = () => {
                       2
                     </div>
                     <div>
-                      <p className="font-medium">Common Phrases</p>
-                      <p className="text-xs text-muted-foreground">15 minutes</p>
+                      <p className="font-medium">Frases Comuns</p>
+                      <p className="text-xs text-muted-foreground">15 minutos</p>
                     </div>
                   </div>
                   <div className="h-3 w-3 rounded-full bg-muted" />
@@ -153,8 +153,8 @@ const Hero = () => {
                       3
                     </div>
                     <div>
-                      <p className="font-medium">Simple Questions</p>
-                      <p className="text-xs text-muted-foreground">12 minutes</p>
+                      <p className="font-medium">Perguntas Simples</p>
+                      <p className="text-xs text-muted-foreground">12 minutos</p>
                     </div>
                   </div>
                   <div className="h-3 w-3 rounded-full bg-muted" />
@@ -162,7 +162,7 @@ const Hero = () => {
               </div>
               
               <Button variant="subtle" width="full">
-                Continue Learning
+                Continuar Aprendendo
               </Button>
             </div>
           </div>

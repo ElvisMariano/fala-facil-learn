@@ -58,31 +58,31 @@ const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <NavigationItem label="Lessons" href="/licoes">
+            <NavigationItem label="Lições" href="/licoes">
               <div className="rounded-lg bg-white p-4 shadow-lg w-64 grid gap-2">
                 <Link to="/licoes/iniciante" className="block p-2 hover:bg-muted rounded-md transition-colors">
-                  Beginner (A1-A2)
+                  Iniciante (A1-A2)
                 </Link>
                 <Link to="/licoes/intermediario" className="block p-2 hover:bg-muted rounded-md transition-colors">
-                  Intermediate (B1-B2)
+                  Intermediário (B1-B2)
                 </Link>
                 <Link to="/licoes/avancado" className="block p-2 hover:bg-muted rounded-md transition-colors">
-                  Advanced (C1-C2)
+                  Avançado (C1-C2)
                 </Link>
               </div>
             </NavigationItem>
             <NavigationItem label="Flashcards" href="/flashcards" />
-            <NavigationItem label="Progress" href="/progresso" />
-            <NavigationItem label="Community" href="/comunidade" />
+            <NavigationItem label="Progresso" href="/progresso" />
+            <NavigationItem label="Comunidade" href="/comunidade" />
           </nav>
 
           {/* Authentication Buttons */}
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="subtle" size="sm" onClick={() => handleNavigation("/login")}>
-              Login
+              Entrar
             </Button>
             <Button size="sm" onClick={() => handleNavigation("/registro")}>
-              Sign up
+              Cadastrar
             </Button>
           </div>
 
@@ -90,7 +90,7 @@ const Header = () => {
           <button
             className="md:hidden flex items-center"
             onClick={toggleMobileMenu}
-            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-label={mobileMenuOpen ? "Fechar menu" : "Abrir menu"}
           >
             {mobileMenuOpen ? (
               <X className="h-6 w-6 text-foreground" />
@@ -110,25 +110,25 @@ const Header = () => {
       >
         <nav className="flex flex-col space-y-6">
           <div className="text-lg font-medium py-2 border-b border-muted" onClick={() => handleNavigation("/licoes")}>
-            Lessons
+            Lições
           </div>
           <div className="text-lg font-medium py-2 border-b border-muted" onClick={() => handleNavigation("/flashcards")}>
             Flashcards
           </div>
           <div className="text-lg font-medium py-2 border-b border-muted" onClick={() => handleNavigation("/progresso")}>
-            Progress
+            Progresso
           </div>
           <div className="text-lg font-medium py-2 border-b border-muted" onClick={() => handleNavigation("/comunidade")}>
-            Community
+            Comunidade
           </div>
         </nav>
         
         <div className="mt-8 flex flex-col space-y-4">
           <Button variant="subtle" width="full" onClick={() => handleNavigation("/login")}>
-            Login
+            Entrar
           </Button>
           <Button width="full" onClick={() => handleNavigation("/registro")}>
-            Sign up
+            Cadastrar
           </Button>
         </div>
       </div>

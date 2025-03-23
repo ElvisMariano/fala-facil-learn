@@ -12,7 +12,7 @@ const Footer = () => {
               Fala Fácil
             </h3>
             <p className="text-muted-foreground text-sm max-w-xs">
-              Learn English with confidence through our interactive lessons, flashcards, and community.
+              Aprenda inglês com confiança através de nossas lições interativas, flashcards e comunidade.
             </p>
             <div className="flex space-x-4">
               <SocialLink href="#" icon={<Facebook size={18} />} />
@@ -23,44 +23,44 @@ const Footer = () => {
           </div>
           
           <FooterLinks
-            title="Learn"
+            title="Aprender"
             links={[
-              { label: "Lessons", href: "/lessons" },
+              { label: "Lições", href: "/licoes" },
               { label: "Flashcards", href: "/flashcards" },
-              { label: "Pronunciation", href: "/pronunciation" },
-              { label: "Grammar", href: "/grammar" },
+              { label: "Pronúncia", href: "/pronuncia" },
+              { label: "Gramática", href: "/gramatica" },
             ]}
           />
           
           <FooterLinks
-            title="Community"
+            title="Comunidade"
             links={[
-              { label: "Forums", href: "/forums" },
-              { label: "Events", href: "/events" },
-              { label: "Leaderboard", href: "/leaderboard" },
-              { label: "Success Stories", href: "/success-stories" },
+              { label: "Fóruns", href: "/foruns" },
+              { label: "Eventos", href: "/eventos" },
+              { label: "Classificação", href: "/classificacao" },
+              { label: "Histórias de Sucesso", href: "/historias-sucesso" },
             ]}
           />
           
           <FooterLinks
-            title="Company"
+            title="Empresa"
             links={[
-              { label: "About Us", href: "/about" },
-              { label: "Careers", href: "/careers" },
+              { label: "Sobre Nós", href: "/sobre" },
+              { label: "Carreiras", href: "/carreiras" },
               { label: "Blog", href: "/blog" },
-              { label: "Contact", href: "/contact" },
+              { label: "Contato", href: "/contato" },
             ]}
           />
         </div>
         
         <div className="mt-12 pt-6 border-t border-muted flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
-          <p>© 2023 Fala Fácil. All rights reserved.</p>
+          <p>© 2023 Fala Fácil. Todos os direitos reservados.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <Link to="/terms" className="hover:text-foreground transition-colors">
-              Terms
+            <Link to="/termos" className="hover:text-foreground transition-colors">
+              Termos
             </Link>
-            <Link to="/privacy" className="hover:text-foreground transition-colors">
-              Privacy
+            <Link to="/privacidade" className="hover:text-foreground transition-colors">
+              Privacidade
             </Link>
             <Link to="/cookies" className="hover:text-foreground transition-colors">
               Cookies

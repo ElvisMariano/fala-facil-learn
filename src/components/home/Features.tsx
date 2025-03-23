@@ -30,33 +30,33 @@ const FlashcardIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const features = [
   {
     icon: <Book className="h-6 w-6 text-primary" />,
-    title: "Structured Lessons",
-    description: "Comprehensive lessons organized by proficiency levels from beginner to advanced."
+    title: "Lições Estruturadas",
+    description: "Lições abrangentes organizadas por níveis de proficiência, do iniciante ao avançado."
   },
   {
     icon: <FlashcardIcon className="h-6 w-6 text-primary" />,
-    title: "Flashcard System",
-    description: "Master vocabulary with our spaced repetition system optimized for memory retention."
+    title: "Sistema de Flashcards",
+    description: "Domine o vocabulário com nosso sistema de repetição espaçada otimizado para retenção de memória."
   },
   {
     icon: <ListChecks className="h-6 w-6 text-primary" />,
-    title: "Interactive Activities",
-    description: "Practice with diverse activities including multiple choice, speech recognition, and more."
+    title: "Atividades Interativas",
+    description: "Pratique com atividades diversas, incluindo múltipla escolha, reconhecimento de fala e muito mais."
   },
   {
     icon: <Award className="h-6 w-6 text-primary" />,
-    title: "Gamification",
-    description: "Earn XP, unlock achievements, and maintain streaks to stay motivated."
+    title: "Gamificação",
+    description: "Ganhe XP, desbloqueie conquistas e mantenha sequências para se manter motivado."
   },
   {
     icon: <BarChart3 className="h-6 w-6 text-primary" />,
-    title: "Progress Tracking",
-    description: "Monitor your learning journey with detailed statistics and performance metrics."
+    title: "Acompanhamento de Progresso",
+    description: "Monitore sua jornada de aprendizado com estatísticas detalhadas e métricas de desempenho."
   },
   {
     icon: <Users className="h-6 w-6 text-primary" />,
-    title: "Community",
-    description: "Connect with fellow learners, participate in challenges, and share your progress."
+    title: "Comunidade",
+    description: "Conecte-se com outros alunos, participe de desafios e compartilhe seu progresso."
   }
 ];
 
@@ -66,10 +66,10 @@ const Features = () => {
       <div className="container mx-auto max-w-7xl">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-edge">
-            Designed for Effective Learning
+            Projetado para Aprendizado Eficaz
           </h2>
           <p className="text-muted-foreground">
-            Our platform combines proven language learning methodologies with modern technology to make learning English easy and enjoyable.
+            Nossa plataforma combina metodologias comprovadas de aprendizado de idiomas com tecnologia moderna para tornar o aprendizado de inglês fácil e agradável.
           </p>
         </div>
         
