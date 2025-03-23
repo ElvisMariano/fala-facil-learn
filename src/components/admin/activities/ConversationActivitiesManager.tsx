@@ -32,6 +32,12 @@ interface ConversationActivity {
   createdAt: string;
 }
 
+// Interface para props do componente
+interface ConversationActivitiesManagerProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+}
+
 // Dados de exemplo para atividades de conversação
 const sampleActivities: ConversationActivity[] = [
   {
@@ -88,9 +94,11 @@ const sampleActivities: ConversationActivity[] = [
   }
 ];
 
-const ConversationActivitiesManager: React.FC = () => {
+const ConversationActivitiesManager: React.FC<ConversationActivitiesManagerProps> = ({ 
+  searchTerm, 
+  setSearchTerm 
+}) => {
   const [activities, setActivities] = useState<ConversationActivity[]>(sampleActivities);
-  const [searchTerm, setSearchTerm] = useState("");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<ConversationActivity | null>(null);
   const [newActivity, setNewActivity] = useState<Partial<ConversationActivity>>({
