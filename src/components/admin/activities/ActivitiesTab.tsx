@@ -1,7 +1,6 @@
 
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
-import { Button } from "@/components/ui/custom/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/custom/Tabs";
 import FlashcardsManager from "./FlashcardsManager";
 import ConversationActivitiesManager from "./ConversationActivitiesManager";

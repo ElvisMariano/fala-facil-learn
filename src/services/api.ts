@@ -59,11 +59,11 @@ const request = async (endpoint: string, options: RequestInit = {}) => {
 };
 
 export const api = {
-  get: (endpoint: string, params = {}) => {
+  get: (endpoint: string, params: Record<string, any> = {}) => {
     const url = new URL(`${API_URL}${endpoint}`);
     Object.keys(params).forEach(key => {
-      if (params[key as keyof typeof params] !== undefined && params[key as keyof typeof params] !== null) {
-        url.searchParams.append(key, params[key as keyof typeof params].toString());
+      if (params[key] !== undefined && params[key] !== null) {
+        url.searchParams.append(key, String(params[key]));
       }
     });
     
