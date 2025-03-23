@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
@@ -18,24 +18,22 @@ import Admin from "./pages/Admin";
 import ModalVerbsLesson from "./pages/grammar/ModalVerbsLesson";
 
 export const AppRoutes = () => (
-  <BrowserRouter>
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/licoes/*" element={<Lessons />} />
-      <Route path="/flashcards" element={<FlashcardPage />} />
-      <Route path="/vocabulario/*" element={<Vocabulary />} />
-      <Route path="/gramatica" element={<Grammar />} />
-      <Route path="/gramatica/modal-verbs" element={<ModalVerbsLesson />} />
-      <Route path="/conversacao/*" element={<Conversation />} />
-      <Route path="/progresso" element={<Progress />} />
-      <Route path="/comunidade" element={<Community />} />
-      <Route path="/perfil" element={<Perfil />} />
-      <Route path="/conquistas" element={<Conquistas />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/registro" element={<Registro />} />
-      <Route path="/admin/*" element={<Admin />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  </BrowserRouter>
+  <Routes>
+    <Route path="/" element={<Index />} />
+    <Route path="/dashboard" element={<Dashboard />} />
+    <Route path="/licoes/*" element={<Lessons />} />
+    <Route path="/flashcards" element={<FlashcardPage />} />
+    <Route path="/vocabulario/*" element={<Vocabulary />} />
+    <Route path="/gramatica" element={<Grammar />} />
+    <Route path="/gramatica/modal-verbs" element={<ModalVerbsLesson />} />
+    <Route path="/conversacao/*" element={<Conversation />} />
+    <Route path="/progresso" element={<Progress />} />
+    <Route path="/comunidade" element={<Community />} />
+    <Route path="/perfil" element={<Perfil />} />
+    <Route path="/conquistas" element={<Conquistas />} />
+    <Route path="/login" element={<Login />} />
+    <Route path="/registro" element={<Registro />} />
+    <Route path="/admin/*" element={<Admin />} />
+    <Route path="*" element={<NotFound />} />
+  </Routes>
 );
