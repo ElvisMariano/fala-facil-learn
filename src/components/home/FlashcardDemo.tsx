@@ -143,7 +143,7 @@ const FlashcardDemo = () => {
                 exit={{ 
                   x: direction * -50, 
                   opacity: 0,
-                  rotateY: isFlipped ? 180 : 0 
+                  rotateY: isFlipped ? -180 : 0 
                 }}
                 transition={{ duration: 0.3 }}
                 className="absolute inset-0 cursor-pointer preserve-3d"
