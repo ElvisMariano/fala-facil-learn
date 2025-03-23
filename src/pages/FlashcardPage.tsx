@@ -438,36 +438,38 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
               </div>
               
               {/* Card back */}
-              <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-primary/5 border border-primary/20 rotateY-180 ${isFlipped ? 'opacity-100' : 'opacity-0'}`} style={{ transform: 'rotateY(180deg)' }}>
-                <p className="text-4xl font-display font-bold mb-6" style={{ transform: 'rotateY(180deg)' }}>{currentCard.back}</p>
-                <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6" style={{ transform: 'rotateY(180deg)' }}>
-                  <p className="text-sm text-muted-foreground italic">"{currentCard.example}"</p>
-                </div>
-                <div className="flex gap-2" style={{ transform: 'rotateY(180deg)' }}>
-                  <Button 
-                    variant="subtle" 
-                    size="sm" 
-                    className="flex items-center gap-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayAudio(currentCard.example);
-                    }}
-                  >
-                    <Volume2 className="h-4 w-4" />
-                    <span>Ouvir</span>
-                  </Button>
-                  <Button 
-                    variant="subtle" 
-                    size="sm" 
-                    className="flex items-center gap-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayAudio(currentCard.example, true);
-                    }}
-                  >
-                    <VolumeX className="h-4 w-4" />
-                    <span>Ouvir Lento</span>
-                  </Button>
+              <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-primary/5 border border-primary/20 ${isFlipped ? 'opacity-100' : 'opacity-0'}`} style={{ transform: 'rotateY(180deg)' }}>
+                <div style={{ transform: 'rotateY(180deg)' }} className="flex flex-col items-center justify-center w-full h-full">
+                  <p className="text-4xl font-display font-bold mb-6">{currentCard.back}</p>
+                  <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6">
+                    <p className="text-sm text-muted-foreground italic">"{currentCard.example}"</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="subtle" 
+                      size="sm" 
+                      className="flex items-center gap-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayAudio(currentCard.example);
+                      }}
+                    >
+                      <Volume2 className="h-4 w-4" />
+                      <span>Ouvir</span>
+                    </Button>
+                    <Button 
+                      variant="subtle" 
+                      size="sm" 
+                      className="flex items-center gap-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayAudio(currentCard.example, true);
+                      }}
+                    >
+                      <VolumeX className="h-4 w-4" />
+                      <span>Ouvir Lento</span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </motion.div>

@@ -117,10 +117,10 @@ const FlashcardDemo = () => {
       <div className="container mx-auto max-w-7xl">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-edge">
-            Flashcard System
+            Sistema de Flashcards
           </h2>
           <p className="text-muted-foreground">
-            Master vocabulary with our intelligent flashcard system using spaced repetition for optimal memorization.
+            Domine o vocabulário com nosso sistema inteligente de flashcards usando repetição espaçada para memorização ideal.
           </p>
         </div>
         
@@ -152,49 +152,51 @@ const FlashcardDemo = () => {
                 {/* Card front */}
                 <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-white border border-muted ${isFlipped ? 'opacity-0' : 'opacity-100'}`}>
                   <div className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary mb-4">
-                    Level {currentCard.level}
+                    Nível {currentCard.level}
                   </div>
                   <p className="text-4xl font-display font-bold mb-4">{currentCard.front}</p>
-                  <p className="text-sm text-muted-foreground mb-6">Click to flip</p>
+                  <p className="text-sm text-muted-foreground mb-6">Clique para virar</p>
                   <div className="flex gap-2">
                     <Button variant="subtle" size="sm" className="flex items-center gap-2" onClick={(e) => {
                       e.stopPropagation();
                       handlePlayAudio(currentCard.front);
                     }}>
                       <Volume2 className="h-4 w-4" />
-                      <span>Listen</span>
+                      <span>Ouvir</span>
                     </Button>
                     <Button variant="subtle" size="sm" className="flex items-center gap-2" onClick={(e) => {
                       e.stopPropagation();
                       handlePlayAudio(currentCard.front, true);
                     }}>
                       <VolumeX className="h-4 w-4" />
-                      <span>Slow</span>
+                      <span>Ouvir Lento</span>
                     </Button>
                   </div>
                 </div>
                 
                 {/* Card back */}
-                <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-primary/5 border border-primary/20 rotateY-180 ${isFlipped ? 'opacity-100' : 'opacity-0'}`} style={{ transform: 'rotateY(180deg)' }}>
-                  <p className="text-4xl font-display font-bold mb-6" style={{ transform: 'rotateY(180deg)' }}>{currentCard.back}</p>
-                  <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6" style={{ transform: 'rotateY(180deg)' }}>
-                    <p className="text-sm text-muted-foreground italic">"{currentCard.example}"</p>
-                  </div>
-                  <div className="flex gap-2" style={{ transform: 'rotateY(180deg)' }}>
-                    <Button variant="subtle" size="sm" className="flex items-center gap-2" onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayAudio(currentCard.example);
-                    }}>
-                      <Volume2 className="h-4 w-4" />
-                      <span>Listen</span>
-                    </Button>
-                    <Button variant="subtle" size="sm" className="flex items-center gap-2" onClick={(e) => {
-                      e.stopPropagation();
-                      handlePlayAudio(currentCard.example, true);
-                    }}>
-                      <VolumeX className="h-4 w-4" />
-                      <span>Slow</span>
-                    </Button>
+                <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-primary/5 border border-primary/20 ${isFlipped ? 'opacity-100' : 'opacity-0'}`} style={{ transform: 'rotateY(180deg)' }}>
+                  <div style={{ transform: 'rotateY(180deg)' }} className="flex flex-col items-center justify-center w-full h-full">
+                    <p className="text-4xl font-display font-bold mb-6">{currentCard.back}</p>
+                    <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6">
+                      <p className="text-sm text-muted-foreground italic">"{currentCard.example}"</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="subtle" size="sm" className="flex items-center gap-2" onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayAudio(currentCard.example);
+                      }}>
+                        <Volume2 className="h-4 w-4" />
+                        <span>Ouvir</span>
+                      </Button>
+                      <Button variant="subtle" size="sm" className="flex items-center gap-2" onClick={(e) => {
+                        e.stopPropagation();
+                        handlePlayAudio(currentCard.example, true);
+                      }}>
+                        <VolumeX className="h-4 w-4" />
+                        <span>Ouvir Lento</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -203,9 +205,9 @@ const FlashcardDemo = () => {
           
           {/* Flashcard description */}
           <div className="space-y-6">
-            <h3 className="text-2xl font-display font-bold">Optimize Your Learning</h3>
+            <h3 className="text-2xl font-display font-bold">Otimize Seu Aprendizado</h3>
             <p className="text-muted-foreground">
-              Our flashcard system uses spaced repetition technology to maximize your memory retention. Words you find difficult will appear more frequently, while those you know well will appear less often.
+              Nosso sistema de flashcards usa tecnologia de repetição espaçada para maximizar sua retenção de memória. Palavras que você acha difíceis aparecerão com mais frequência, enquanto aquelas que você conhece bem aparecerão com menos frequência.
             </p>
             
             <ul className="space-y-4">
@@ -214,8 +216,8 @@ const FlashcardDemo = () => {
                   <Check className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="font-medium">Intelligent Algorithm</p>
-                  <p className="text-sm text-muted-foreground">Cards adapt to your learning progress</p>
+                  <p className="font-medium">Algoritmo Inteligente</p>
+                  <p className="text-sm text-muted-foreground">Cartões se adaptam ao seu progresso de aprendizado</p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
@@ -223,8 +225,8 @@ const FlashcardDemo = () => {
                   <Check className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="font-medium">Audio Pronunciation</p>
-                  <p className="text-sm text-muted-foreground">Hear native pronunciation for every word</p>
+                  <p className="font-medium">Pronúncia em Áudio</p>
+                  <p className="text-sm text-muted-foreground">Ouça a pronúncia nativa para cada palavra</p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
@@ -232,14 +234,14 @@ const FlashcardDemo = () => {
                   <Check className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="font-medium">Example Sentences</p>
-                  <p className="text-sm text-muted-foreground">Learn words in context for better retention</p>
+                  <p className="font-medium">Exemplos em Frases</p>
+                  <p className="text-sm text-muted-foreground">Aprenda palavras em contexto para melhor retenção</p>
                 </div>
               </li>
             </ul>
             
             <div className="pt-4">
-              <Button>Start Practicing</Button>
+              <Button>Começar a Praticar</Button>
             </div>
           </div>
         </div>
@@ -260,13 +262,13 @@ const FlashcardDemo = () => {
         {/* Difficulty buttons */}
         <div className="flex justify-center mt-4 gap-4">
           <Button variant="outline" size="sm" className="border-destructive text-destructive hover:bg-destructive/10">
-            <X className="h-4 w-4 mr-1" /> Hard
+            <X className="h-4 w-4 mr-1" /> Difícil
           </Button>
           <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary/10">
-            Medium
+            Médio
           </Button>
           <Button variant="outline" size="sm" className="border-accent text-accent hover:bg-accent/10">
-            <Check className="h-4 w-4 mr-1" /> Easy
+            <Check className="h-4 w-4 mr-1" /> Fácil
           </Button>
         </div>
       </div>

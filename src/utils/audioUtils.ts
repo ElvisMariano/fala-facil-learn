@@ -19,11 +19,25 @@ export const playAudio = (text: string, lang: string = 'en-US', rate: number = 0
       const utterance = new SpeechSynthesisUtterance(processedText);
       utterance.lang = lang;
       utterance.rate = slow ? rate * 0.7 : rate; // Reduz ainda mais a velocidade no modo lento
+      utterance.volume = 1.0; // Garantir que o volume esteja no máximo
       
-      utterance.onend = () => resolve();
-      utterance.onerror = (event) => reject(new Error(`Erro na síntese de fala: ${event.error}`));
-      
-      window.speechSynthesis.speak(utterance);
+      // Aguardar um pouco antes de iniciar a síntese de fala
+      setTimeout(() => {
+        // Tentar encontrar uma voz para o idioma especificado
+        const voices = window.speechSynthesis.getVoices();
+        const voiceForLang = voices.find(voice => voice.lang.includes(lang.substring(0, 2)));
+        if (voiceForLang) {
+          utterance.voice = voiceForLang;
+        }
+        
+        utterance.onend = () => resolve();
+        utterance.onerror = (event) => {
+          console.error(`Erro na síntese de fala: ${event.error}`);
+          reject(new Error(`Erro na síntese de fala: ${event.error}`));
+        };
+        
+        window.speechSynthesis.speak(utterance);
+      }, 100);
     } else {
       reject(new Error('A API Web Speech não é suportada neste navegador.'));
     }
@@ -36,7 +50,16 @@ export const playAudio = (text: string, lang: string = 'en-US', rate: number = 0
  */
 export const getAvailableVoices = (): SpeechSynthesisVoice[] => {
   if ('speechSynthesis' in window) {
-    return window.speechSynthesis.getVoices();
+    // Em alguns navegadores, getVoices() pode retornar um array vazio se chamado muito cedo
+    // Por isso, usamos um timeout para garantir que as vozes sejam carregadas
+    let voices = window.speechSynthesis.getVoices();
+    if (voices.length === 0) {
+      // Se não houver vozes, tentar novamente
+      window.speechSynthesis.onvoiceschanged = () => {
+        voices = window.speechSynthesis.getVoices();
+      };
+    }
+    return voices;
   }
   return [];
 };
@@ -58,19 +81,27 @@ export const playAudioWithVoice = (text: string, voiceName: string, rate: number
       // Se for modo lento, adiciona vírgulas entre palavras
       const processedText = slow ? text.split(' ').join(', ') : text;
       
-      const utterance = new SpeechSynthesisUtterance(processedText);
-      const voices = window.speechSynthesis.getVoices();
-      const voice = voices.find(v => v.name === voiceName);
-      
-      if (voice) {
-        utterance.voice = voice;
-      }
-      
-      utterance.rate = slow ? rate * 0.7 : rate; // Reduz ainda mais a velocidade no modo lento
-      utterance.onend = () => resolve();
-      utterance.onerror = (event) => reject(new Error(`Erro na síntese de fala: ${event.error}`));
-      
-      window.speechSynthesis.speak(utterance);
+      // Aguardar um pouco para garantir que as vozes sejam carregadas
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(processedText);
+        const voices = window.speechSynthesis.getVoices();
+        const voice = voices.find(v => v.name === voiceName);
+        
+        if (voice) {
+          utterance.voice = voice;
+        }
+        
+        utterance.rate = slow ? rate * 0.7 : rate; // Reduz ainda mais a velocidade no modo lento
+        utterance.volume = 1.0; // Garantir volume máximo
+        
+        utterance.onend = () => resolve();
+        utterance.onerror = (event) => {
+          console.error(`Erro na síntese de fala: ${event.error}`);
+          reject(new Error(`Erro na síntese de fala: ${event.error}`));
+        };
+        
+        window.speechSynthesis.speak(utterance);
+      }, 100);
     } else {
       reject(new Error('A API Web Speech não é suportada neste navegador.'));
     }
