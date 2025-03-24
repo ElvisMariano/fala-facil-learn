@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -77,7 +78,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/admin/*",
-    element: <ProtectedRoute requireAdmin><Admin /></ProtectedRoute>
+    element: <ProtectedRoute requireAdmin={true}><Admin /></ProtectedRoute>
   },
   {
     path: "*",

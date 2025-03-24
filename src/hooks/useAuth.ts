@@ -23,6 +23,8 @@ export const useAuth = () => {
       // Verificar se a resposta está em um formato esperado e atualizar o usuário
       if (response.data && response.data.user) {
         setUser(response.data.user);
+        console.log('Login successful. User:', response.data.user);
+        console.log('Is admin?', response.data.user.role?.toUpperCase() === 'ADMIN');
       } else {
         console.error('Formato de resposta inesperado no login:', response);
       }
@@ -64,6 +66,8 @@ export const useAuth = () => {
   };
 
   const isAuthenticated = !!user;
+  
+  // Certifique-se de que a verificação de admin seja case-insensitive
   const isAdmin = user && (user.role?.toUpperCase() === 'ADMIN');
 
   // Função para obter o nome de usuário, considerando tanto username quanto name

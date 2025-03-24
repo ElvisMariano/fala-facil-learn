@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -16,6 +17,7 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('Adding Authorization header:', `Bearer ${token}`);
   }
   return config;
 }, (error) => {
@@ -34,6 +36,7 @@ api.interceptors.response.use(
       // The server responded with an error status
       if (error.response.status === 401) {
         // Unauthorized - token invalid or expired
+        console.log('401 Unauthorized error received');
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         
@@ -44,6 +47,7 @@ api.interceptors.response.use(
         }
       } else if (error.response.status === 403) {
         // Forbidden - user doesn't have permission
+        console.log('403 Forbidden error received');
         toast.error('Você não tem permissão para acessar este recurso.');
       } else if (error.response.status === 404) {
         // Not found

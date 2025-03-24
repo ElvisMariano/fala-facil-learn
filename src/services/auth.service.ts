@@ -26,7 +26,18 @@ export const AuthService = {
       // Verifica se a resposta tem o formato esperado
       if (response.data?.data?.token) {
         localStorage.setItem('token', response.data.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.data.user));
+        
+        // Normalize user object to ensure consistent role property
+        const user = response.data.data.user;
+        
+        // Ensure role is always uppercase for consistency in checks
+        if (user && user.role) {
+          user.role = user.role.toUpperCase();
+        }
+        
+        localStorage.setItem('user', JSON.stringify(user));
+        console.log('User saved to localStorage:', user);
+        console.log('Is admin?', user.role === 'ADMIN');
       } else {
         console.error('Formato de resposta inesperado:', response.data);
         throw new Error('Formato de resposta inválido');
@@ -56,10 +67,19 @@ export const AuthService = {
           user.username = user.name;
         }
         
+        // Ensure role is always uppercase for consistency
+        if (user.role) {
+          user.role = user.role.toUpperCase();
+        }
+        
+        console.log('Current user from localStorage:', user);
+        console.log('Is admin?', user.role === 'ADMIN');
+        
         return user;
       }
       return null;
     } catch (error) {
+      console.error('Error parsing user from localStorage:', error);
       return null;
     }
   },
@@ -70,6 +90,8 @@ export const AuthService = {
 
   isAdmin() {
     const user = this.getCurrentUser();
-    return user?.role?.toUpperCase() === 'ADMIN';
+    const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
+    console.log('isAdmin check:', isAdmin, 'User role:', user?.role);
+    return isAdmin;
   }
 };
