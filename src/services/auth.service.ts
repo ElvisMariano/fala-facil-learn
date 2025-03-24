@@ -1,28 +1,6 @@
+
 import api from '../lib/api';
-
-export interface RegisterData {
-  username: string;
-  email: string;
-  password: string;
-}
-
-export interface LoginData {
-  email: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  status: string;
-  data: {
-    user: {
-      id: number;
-      username: string;
-      email: string;
-      role: string;
-    };
-    token: string;
-  };
-}
+import { AuthResponse, LoginData, RegisterData, User } from '@/types/auth';
 
 export const AuthService = {
   async register(data: RegisterData): Promise<AuthResponse> {
@@ -46,10 +24,7 @@ export const AuthService = {
       console.log('Resposta do login:', response.data);
       
       // Verifica se a resposta tem o formato esperado
-      if (response.data?.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      } else if (response.data?.data?.token) {
+      if (response.data?.data?.token) {
         localStorage.setItem('token', response.data.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.data.user));
       } else {
@@ -70,11 +45,11 @@ export const AuthService = {
     window.location.href = '/login';
   },
 
-  getCurrentUser() {
+  getCurrentUser(): User | null {
     try {
       const userStr = localStorage.getItem('user');
       if (userStr) {
-        const user = JSON.parse(userStr);
+        const user = JSON.parse(userStr) as User;
         
         // Normalize user object - se existe name mas não username, mapeia name para username
         if (user.name && !user.username) {
@@ -97,4 +72,4 @@ export const AuthService = {
     const user = this.getCurrentUser();
     return user?.role?.toUpperCase() === 'ADMIN';
   }
-}; 
+};

@@ -1,13 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { AuthService } from '@/services/auth.service';
-
-export interface User {
-  id: number;
-  username?: string;
-  name?: string;
-  email: string;
-  role: string;
-}
+import { User } from '@/types/auth';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(AuthService.getCurrentUser());
@@ -29,8 +23,6 @@ export const useAuth = () => {
       // Verificar se a resposta está em um formato esperado e atualizar o usuário
       if (response.data && response.data.user) {
         setUser(response.data.user);
-      } else if (response.user) {
-        setUser(response.user);
       } else {
         console.error('Formato de resposta inesperado no login:', response);
       }
@@ -90,4 +82,4 @@ export const useAuth = () => {
     isAdmin,
     getUserDisplayName
   };
-}; 
+};
