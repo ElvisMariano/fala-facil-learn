@@ -1,70 +1,131 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AtSign, User, Lock, Bell, Globe, Zap, Save } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { ProfileService, type Profile, type ProfileUpdateData, type PasswordUpdateData } from "@/services/profile.service";
+import { toast } from "@/components/ui/use-toast";
 
 const Perfil = () => {
-  // Mock user data
-  const [userData, setUserData] = useState({
-    name: "João Silva",
-    email: "joao@example.com",
-    language: "pt-BR",
-    notifications: {
-      email: true,
-      push: true,
-      streak: true,
-      updates: false
-    },
-    learningGoal: "10",
-    currentLevel: 12,
-    streakDays: 7,
-    totalXP: 3450
-  });
-  
+  const { user, getUserDisplayName } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("account");
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({...userData});
-  const [successMessage, setSuccessMessage] = useState("");
-  
+  const [formData, setFormData] = useState<ProfileUpdateData>({});
+  const [passwordData, setPasswordData] = useState<PasswordUpdateData>({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const data = await ProfileService.getProfile();
+      setProfile(data);
+      setFormData({
+        learningGoal: data.learningGoal,
+        language: data.language,
+        notifications: data.notifications
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar os dados do perfil.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setIsEditing(false);
-    setFormData({...userData});
-    setSuccessMessage("");
+    if (profile) {
+      setFormData({
+        learningGoal: profile.learningGoal,
+        language: profile.language,
+        notifications: profile.notifications
+      });
+    }
+    setPasswordData({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
   };
-  
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
     
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         notifications: {
-          ...formData.notifications,
+          ...prev.notifications,
           [name.split('.')[1]]: checked
         }
-      });
+      }));
+    } else if (name.startsWith('password.')) {
+      const field = name.split('.')[1];
+      setPasswordData(prev => ({
+        ...prev,
+        [field]: value
+      }));
     } else {
-      setFormData({
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         [name]: value
+      }));
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      if (activeTab === 'password') {
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+          toast({
+            title: "Erro",
+            description: "As senhas não coincidem.",
+            variant: "destructive"
+          });
+          return;
+        }
+        await ProfileService.updatePassword(passwordData);
+        toast({
+          title: "Sucesso",
+          description: "Senha atualizada com sucesso!"
+        });
+      } else {
+        const updatedProfile = await ProfileService.updateProfile(formData);
+        setProfile(updatedProfile);
+        toast({
+          title: "Sucesso",
+          description: "Perfil atualizado com sucesso!"
+        });
+      }
+      setIsEditing(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as alterações.",
+        variant: "destructive"
       });
     }
   };
-  
-  const handleSave = () => {
-    setUserData(formData);
-    setIsEditing(false);
-    setSuccessMessage("Alterações salvas com sucesso!");
-    setTimeout(() => {
-      setSuccessMessage("");
-    }, 3000);
-  };
-  
+
+  if (loading) {
+    return <div>Carregando...</div>;
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -80,10 +141,10 @@ const Perfil = () => {
                 <CardContent className="p-4">
                   <div className="flex flex-col items-center mb-6 pt-2">
                     <div className="h-24 w-24 rounded-full bg-gradient-to-br from-primary to-primary-foreground text-white flex items-center justify-center text-3xl font-bold mb-2">
-                      {userData.name.charAt(0)}
+                      {getUserDisplayName()?.charAt(0) || user?.email?.charAt(0) || '?'}
                     </div>
-                    <h2 className="font-medium">{userData.name}</h2>
-                    <p className="text-sm text-muted-foreground">{userData.email}</p>
+                    <h2 className="font-medium">{getUserDisplayName() || 'Usuário'}</h2>
+                    <p className="text-sm text-muted-foreground">{user?.email || 'Email não disponível'}</p>
                   </div>
                   
                   <div className="flex flex-row md:flex-col gap-2">
@@ -130,15 +191,15 @@ const Perfil = () => {
                 <CardContent className="text-sm">
                   <div className="flex justify-between items-center py-2 border-b">
                     <span>Nível</span>
-                    <span className="font-medium">{userData.currentLevel}</span>
+                    <span className="font-medium">{profile?.level}</span>
                   </div>
                   <div className="flex justify-between items-center py-2 border-b">
                     <span>Sequência</span>
-                    <span className="font-medium">{userData.streakDays} dias</span>
+                    <span className="font-medium">{profile?.streakDays} dias</span>
                   </div>
                   <div className="flex justify-between items-center py-2">
                     <span>XP Total</span>
-                    <span className="font-medium">{userData.totalXP}</span>
+                    <span className="font-medium">{profile?.xp}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -168,7 +229,13 @@ const Perfil = () => {
                     ) : (
                       <Button variant="ghost" onClick={() => {
                         setIsEditing(false);
-                        setFormData({...userData});
+                        if (profile) {
+                          setFormData({
+                            learningGoal: profile.learningGoal,
+                            language: profile.language,
+                            notifications: profile.notifications
+                          });
+                        }
                       }}>
                         Cancelar
                       </Button>
@@ -177,28 +244,21 @@ const Perfil = () => {
                 </CardHeader>
                 
                 <CardContent>
-                  {successMessage && (
-                    <div className="bg-accent/10 text-accent text-sm p-3 rounded-md mb-4">
-                      {successMessage}
-                    </div>
-                  )}
-                  
                   {activeTab === "account" && (
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label htmlFor="name" className="text-sm font-medium">
-                          Nome
+                        <label htmlFor="username" className="text-sm font-medium">
+                          Nome de Usuário
                         </label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <input
-                            id="name"
-                            name="name"
+                            id="username"
+                            name="username"
                             type="text"
                             className="w-full pl-10 pr-4 py-2 border rounded-lg"
-                            value={formData.name}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
+                            value={user?.username}
+                            disabled
                           />
                         </div>
                       </div>
@@ -214,19 +274,11 @@ const Perfil = () => {
                             name="email"
                             type="email"
                             className="w-full pl-10 pr-4 py-2 border rounded-lg"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
+                            value={user?.email}
+                            disabled
                           />
                         </div>
                       </div>
-                      
-                      {isEditing && (
-                        <Button onClick={handleSave} className="mt-6">
-                          <Save className="h-4 w-4 mr-2" />
-                          Salvar Alterações
-                        </Button>
-                      )}
                     </div>
                   )}
                   
@@ -240,14 +292,17 @@ const Perfil = () => {
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <input
                             id="currentPassword"
+                            name="password.currentPassword"
                             type="password"
                             className="w-full pl-10 pr-4 py-2 border rounded-lg"
                             placeholder="••••••••"
+                            value={passwordData.currentPassword}
+                            onChange={handleInputChange}
                             disabled={!isEditing}
                           />
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <label htmlFor="newPassword" className="text-sm font-medium">
                           Nova Senha
@@ -256,14 +311,17 @@ const Perfil = () => {
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <input
                             id="newPassword"
+                            name="password.newPassword"
                             type="password"
                             className="w-full pl-10 pr-4 py-2 border rounded-lg"
                             placeholder="••••••••"
+                            value={passwordData.newPassword}
+                            onChange={handleInputChange}
                             disabled={!isEditing}
                           />
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <label htmlFor="confirmPassword" className="text-sm font-medium">
                           Confirmar Nova Senha
@@ -272,167 +330,121 @@ const Perfil = () => {
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <input
                             id="confirmPassword"
+                            name="password.confirmPassword"
                             type="password"
                             className="w-full pl-10 pr-4 py-2 border rounded-lg"
                             placeholder="••••••••"
+                            value={passwordData.confirmPassword}
+                            onChange={handleInputChange}
                             disabled={!isEditing}
                           />
                         </div>
                       </div>
-                      
-                      {isEditing && (
-                        <Button onClick={handleSave} className="mt-6">
-                          <Save className="h-4 w-4 mr-2" />
-                          Atualizar Senha
-                        </Button>
-                      )}
                     </div>
                   )}
                   
                   {activeTab === "notifications" && (
                     <div className="space-y-4">
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-medium">Emails</h3>
-                            <p className="text-sm text-muted-foreground">Receba emails sobre seu progresso e dicas</p>
-                          </div>
-                          <div>
-                            <input
-                              type="checkbox"
-                              id="notifications.email"
-                              name="notifications.email"
-                              className="rounded"
-                              checked={formData.notifications.email}
-                              onChange={handleInputChange}
-                              disabled={!isEditing}
-                            />
-                          </div>
-                        </div>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            name="notifications.email"
+                            checked={formData.notifications?.email}
+                            onChange={handleInputChange}
+                            disabled={!isEditing}
+                            className="rounded border-gray-300"
+                          />
+                          <span>Notificações por email</span>
+                        </label>
                         
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-medium">Notificações Push</h3>
-                            <p className="text-sm text-muted-foreground">Receba notificações no navegador</p>
-                          </div>
-                          <div>
-                            <input
-                              type="checkbox"
-                              id="notifications.push"
-                              name="notifications.push"
-                              className="rounded"
-                              checked={formData.notifications.push}
-                              onChange={handleInputChange}
-                              disabled={!isEditing}
-                            />
-                          </div>
-                        </div>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            name="notifications.push"
+                            checked={formData.notifications?.push}
+                            onChange={handleInputChange}
+                            disabled={!isEditing}
+                            className="rounded border-gray-300"
+                          />
+                          <span>Notificações push</span>
+                        </label>
                         
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-medium">Lembretes de Sequência</h3>
-                            <p className="text-sm text-muted-foreground">Receba lembretes para manter sua sequência ativa</p>
-                          </div>
-                          <div>
-                            <input
-                              type="checkbox"
-                              id="notifications.streak"
-                              name="notifications.streak"
-                              className="rounded"
-                              checked={formData.notifications.streak}
-                              onChange={handleInputChange}
-                              disabled={!isEditing}
-                            />
-                          </div>
-                        </div>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            name="notifications.streak"
+                            checked={formData.notifications?.streak}
+                            onChange={handleInputChange}
+                            disabled={!isEditing}
+                            className="rounded border-gray-300"
+                          />
+                          <span>Lembretes de sequência</span>
+                        </label>
                         
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-medium">Atualizações e Novidades</h3>
-                            <p className="text-sm text-muted-foreground">Fique por dentro das novidades do Fala Fácil</p>
-                          </div>
-                          <div>
-                            <input
-                              type="checkbox"
-                              id="notifications.updates"
-                              name="notifications.updates"
-                              className="rounded"
-                              checked={formData.notifications.updates}
-                              onChange={handleInputChange}
-                              disabled={!isEditing}
-                            />
-                          </div>
-                        </div>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            name="notifications.updates"
+                            checked={formData.notifications?.updates}
+                            onChange={handleInputChange}
+                            disabled={!isEditing}
+                            className="rounded border-gray-300"
+                          />
+                          <span>Atualizações e novidades</span>
+                        </label>
                       </div>
-                      
-                      {isEditing && (
-                        <Button onClick={handleSave} className="mt-6">
-                          <Save className="h-4 w-4 mr-2" />
-                          Salvar Preferências
-                        </Button>
-                      )}
                     </div>
                   )}
                   
                   {activeTab === "preferences" && (
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <label htmlFor="language" className="text-sm font-medium">
-                          Idioma da Interface
-                        </label>
-                        <div className="relative">
-                          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <select
-                            id="language"
-                            name="language"
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg"
-                            value={formData.language}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
-                          >
-                            <option value="pt-BR">Português (Brasil)</option>
-                            <option value="en-US">English (US)</option>
-                            <option value="es">Español</option>
-                          </select>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Este é o idioma usado na interface do aplicativo.
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-2">
                         <label htmlFor="learningGoal" className="text-sm font-medium">
                           Meta Diária (minutos)
                         </label>
-                        <div className="relative">
-                          <Zap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <select
-                            id="learningGoal"
-                            name="learningGoal"
-                            className="w-full pl-10 pr-4 py-2 border rounded-lg"
-                            value={formData.learningGoal}
-                            onChange={handleInputChange}
-                            disabled={!isEditing}
-                          >
-                            <option value="5">5 minutos</option>
-                            <option value="10">10 minutos</option>
-                            <option value="15">15 minutos</option>
-                            <option value="20">20 minutos</option>
-                            <option value="30">30 minutos</option>
-                          </select>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Quanto tempo você deseja estudar todos os dias.
-                        </p>
+                        <select
+                          id="learningGoal"
+                          name="learningGoal"
+                          className="w-full px-4 py-2 border rounded-lg"
+                          value={formData.learningGoal}
+                          onChange={handleInputChange}
+                          disabled={!isEditing}
+                        >
+                          <option value="5">5 minutos</option>
+                          <option value="10">10 minutos</option>
+                          <option value="15">15 minutos</option>
+                          <option value="20">20 minutos</option>
+                          <option value="30">30 minutos</option>
+                          <option value="45">45 minutos</option>
+                          <option value="60">60 minutos</option>
+                        </select>
                       </div>
                       
-                      {isEditing && (
-                        <Button onClick={handleSave} className="mt-6">
-                          <Save className="h-4 w-4 mr-2" />
-                          Salvar Preferências
-                        </Button>
-                      )}
+                      <div className="space-y-2">
+                        <label htmlFor="language" className="text-sm font-medium">
+                          Idioma da Interface
+                        </label>
+                        <select
+                          id="language"
+                          name="language"
+                          className="w-full px-4 py-2 border rounded-lg"
+                          value={formData.language}
+                          onChange={handleInputChange}
+                          disabled={!isEditing}
+                        >
+                          <option value="pt-BR">Português (Brasil)</option>
+                          <option value="en">English</option>
+                        </select>
+                      </div>
                     </div>
+                  )}
+                  
+                  {isEditing && (
+                    <Button onClick={handleSave} className="mt-6">
+                      <Save className="h-4 w-4 mr-2" />
+                      Salvar Alterações
+                    </Button>
                   )}
                 </CardContent>
               </Card>

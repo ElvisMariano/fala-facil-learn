@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
 import Header from "@/components/layout/Header";
@@ -6,44 +6,127 @@ import Footer from "@/components/layout/Footer";
 import { ProgressIndicator } from "@/components/ui/custom/ProgressIndicator";
 import { BarChart, LineChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Bar, Line } from "recharts";
 import { Link } from "react-router-dom";
+import { ProgressService, type ProgressStats } from "@/services/progress.service";
+import { toast } from "@/components/ui/use-toast";
 
-const weeklyData = [
-  { day: "Seg", minutes: 15, words: 12, xp: 120 },
-  { day: "Ter", minutes: 20, words: 18, xp: 180 },
-  { day: "Qua", minutes: 25, words: 15, xp: 150 },
-  { day: "Qui", minutes: 15, words: 10, xp: 100 },
-  { day: "Sex", minutes: 30, words: 22, xp: 220 },
-  { day: "Sáb", minutes: 40, words: 30, xp: 300 },
-  { day: "Dom", minutes: 35, words: 25, xp: 250 },
-];
-
-const monthlyData = [
-  { month: "Jan", xp: 1200 },
-  { month: "Fev", xp: 1800 },
-  { month: "Mar", xp: 2200 },
-  { month: "Abr", xp: 2500 },
-  { month: "Mai", xp: 3000 },
-  { month: "Jun", xp: 2800 },
-];
-
-const skillsData = [
-  { name: "Vocabulário", mastery: 68 },
-  { name: "Gramática", mastery: 45 },
-  { name: "Compreensão", mastery: 72 },
-  { name: "Fala", mastery: 38 },
-  { name: "Leitura", mastery: 65 },
-  { name: "Escrita", mastery: 52 },
-];
-
-const completedLessons = [
-  { id: 1, title: "Conjugação de Verbos no Presente", date: "2023-05-10", score: 8.5 },
-  { id: 2, title: "Vocabulário de Família", date: "2023-05-12", score: 9.0 },
-  { id: 3, title: "Tempos Verbais: Passado Simples", date: "2023-05-15", score: 7.5 },
-  { id: 4, title: "Pronomes Pessoais", date: "2023-05-18", score: 10.0 },
-  { id: 5, title: "Vocabulário de Comidas", date: "2023-05-20", score: 8.0 },
-];
+// Dados de fallback caso a API falhe
+const fallbackData = {
+  weeklyData: [
+    { day: "Seg", minutes: 15, words: 12, xp: 120 },
+    { day: "Ter", minutes: 20, words: 18, xp: 180 },
+    { day: "Qua", minutes: 25, words: 15, xp: 150 },
+    { day: "Qui", minutes: 15, words: 10, xp: 100 },
+    { day: "Sex", minutes: 30, words: 22, xp: 220 },
+    { day: "Sáb", minutes: 40, words: 30, xp: 300 },
+    { day: "Dom", minutes: 35, words: 25, xp: 250 },
+  ],
+  monthlyData: [
+    { month: "Jan", xp: 1200 },
+    { month: "Fev", xp: 1800 },
+    { month: "Mar", xp: 2200 },
+    { month: "Abr", xp: 2500 },
+    { month: "Mai", xp: 3000 },
+    { month: "Jun", xp: 2800 },
+  ],
+  skillsData: [
+    { name: "Vocabulário", mastery: 68 },
+    { name: "Gramática", mastery: 45 },
+    { name: "Compreensão", mastery: 72 },
+    { name: "Fala", mastery: 38 },
+    { name: "Leitura", mastery: 65 },
+    { name: "Escrita", mastery: 52 },
+  ],
+  completedLessons: [
+    { id: 1, title: "Conjugação de Verbos no Presente", date: "2023-05-10", score: 8.5 },
+    { id: 2, title: "Vocabulário de Família", date: "2023-05-12", score: 9.0 },
+    { id: 3, title: "Tempos Verbais: Passado Simples", date: "2023-05-15", score: 7.5 },
+    { id: 4, title: "Pronomes Pessoais", date: "2023-05-18", score: 10.0 },
+    { id: 5, title: "Vocabulário de Comidas", date: "2023-05-20", score: 8.0 },
+  ],
+  level: 18,
+  proficiencyLevel: "B1",
+  totalMinutes: 180,
+  totalWords: 132,
+  totalXP: 1320
+};
 
 const Progress = () => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [progressData, setProgressData] = useState<ProgressStats | null>(null);
+
+  useEffect(() => {
+    loadProgressData();
+  }, []);
+
+  const loadProgressData = async () => {
+    try {
+      setLoading(true);
+      const data = await ProgressService.getProgressStats();
+      setProgressData(data);
+      setError(null);
+    } catch (err) {
+      console.error("Erro ao carregar dados de progresso:", err);
+      setError("Não foi possível carregar os dados de progresso. Usando dados de exemplo.");
+      // Usar dados de fallback
+      setProgressData(fallbackData as any);
+      
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar seus dados de progresso. Exibindo dados de exemplo.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Carregando seu progresso...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Se não temos dados mesmo após o carregamento, mostrar mensagem de erro
+  if (!progressData) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Dados não disponíveis</h2>
+            <p className="text-muted-foreground mb-6">
+              Não foi possível carregar seus dados de progresso. Por favor, tente novamente mais tarde.
+            </p>
+            <Button onClick={loadProgressData}>Tentar novamente</Button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const { 
+    weeklyData, 
+    monthlyData, 
+    skillsData, 
+    completedLessons,
+    totalMinutes,
+    totalWords,
+    totalXP,
+    level,
+    proficiencyLevel
+  } = progressData;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -55,6 +138,11 @@ const Progress = () => {
             <p className="text-muted-foreground">
               Acompanhe seu desenvolvimento no aprendizado de inglês
             </p>
+            {error && (
+              <div className="mt-2 text-sm text-amber-600 bg-amber-50 p-2 rounded-md">
+                {error}
+              </div>
+            )}
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -105,15 +193,15 @@ const Progress = () => {
                 <div className="grid grid-cols-3 gap-4 mt-6">
                   <div className="bg-muted/50 rounded-lg p-4 text-center">
                     <p className="text-sm text-muted-foreground">Tempo Total</p>
-                    <p className="text-2xl font-semibold">180 min</p>
+                    <p className="text-2xl font-semibold">{totalMinutes} min</p>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-4 text-center">
                     <p className="text-sm text-muted-foreground">Palavras Aprendidas</p>
-                    <p className="text-2xl font-semibold">132</p>
+                    <p className="text-2xl font-semibold">{totalWords}</p>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-4 text-center">
                     <p className="text-sm text-muted-foreground">XP Ganho</p>
-                    <p className="text-2xl font-semibold">1.320</p>
+                    <p className="text-2xl font-semibold">{totalXP}</p>
                   </div>
                 </div>
               </CardContent>
@@ -150,8 +238,14 @@ const Progress = () => {
                   <div className="flex items-center">
                     <div className="relative w-full h-40">
                       <div className="absolute inset-0 flex items-center justify-center flex-col">
-                        <p className="text-4xl font-semibold">B1</p>
-                        <p className="text-sm text-muted-foreground">Intermediário</p>
+                        <p className="text-4xl font-semibold">{proficiencyLevel}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {proficiencyLevel === 'A1' ? 'Iniciante' : 
+                           proficiencyLevel === 'A2' ? 'Básico' : 
+                           proficiencyLevel === 'B1' ? 'Intermediário' : 
+                           proficiencyLevel === 'B2' ? 'Intermediário Avançado' : 
+                           proficiencyLevel === 'C1' ? 'Avançado' : 'Fluente'}
+                        </p>
                       </div>
                       <svg viewBox="0 0 36 36" className="w-full h-full">
                         <path
@@ -244,14 +338,15 @@ const Progress = () => {
                           </td>
                         </tr>
                       ))}
+                      {completedLessons.length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="py-6 text-center text-muted-foreground">
+                            Nenhuma lição completada ainda. Vamos começar a estudar!
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
-                </div>
-                
-                <div className="mt-6 flex justify-end">
-                  <Button variant="outline" as={Link} to="/licoes">
-                    Ver Todas as Lições
-                  </Button>
                 </div>
               </CardContent>
             </Card>

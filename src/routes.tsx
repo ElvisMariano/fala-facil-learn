@@ -1,4 +1,3 @@
-
 import { Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -16,24 +15,72 @@ import Progress from "./pages/Progress";
 import Community from "./pages/Community";
 import Admin from "./pages/Admin";
 import ModalVerbsLesson from "./pages/grammar/ModalVerbsLesson";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { createBrowserRouter } from "react-router-dom";
 
-export const AppRoutes = () => (
-  <Routes>
-    <Route path="/" element={<Index />} />
-    <Route path="/dashboard" element={<Dashboard />} />
-    <Route path="/licoes/*" element={<Lessons />} />
-    <Route path="/flashcards" element={<FlashcardPage />} />
-    <Route path="/vocabulario/*" element={<Vocabulary />} />
-    <Route path="/gramatica" element={<Grammar />} />
-    <Route path="/gramatica/modal-verbs" element={<ModalVerbsLesson />} />
-    <Route path="/conversacao/*" element={<Conversation />} />
-    <Route path="/progresso" element={<Progress />} />
-    <Route path="/comunidade" element={<Community />} />
-    <Route path="/perfil" element={<Perfil />} />
-    <Route path="/conquistas" element={<Conquistas />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/registro" element={<Registro />} />
-    <Route path="/admin/*" element={<Admin />} />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
+export const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Index />
+  },
+  {
+    path: "/login",
+    element: <Login />
+  },
+  {
+    path: "/registro",
+    element: <Registro />
+  },
+  {
+    path: "/dashboard",
+    element: <ProtectedRoute><Dashboard /></ProtectedRoute>
+  },
+  {
+    path: "/licoes/*",
+    element: <ProtectedRoute><Lessons /></ProtectedRoute>
+  },
+  {
+    path: "/flashcards",
+    element: <ProtectedRoute><FlashcardPage /></ProtectedRoute>
+  },
+  {
+    path: "/vocabulario/*",
+    element: <ProtectedRoute><Vocabulary /></ProtectedRoute>
+  },
+  {
+    path: "/gramatica",
+    element: <ProtectedRoute><Grammar /></ProtectedRoute>
+  },
+  {
+    path: "/gramatica/modal-verbs",
+    element: <ProtectedRoute><ModalVerbsLesson /></ProtectedRoute>
+  },
+  {
+    path: "/conversacao/*",
+    element: <ProtectedRoute><Conversation /></ProtectedRoute>
+  },
+  {
+    path: "/progresso",
+    element: <ProtectedRoute><Progress /></ProtectedRoute>
+  },
+  {
+    path: "/comunidade",
+    element: <ProtectedRoute><Community /></ProtectedRoute>
+  },
+  {
+    path: "/perfil",
+    element: <ProtectedRoute><Perfil /></ProtectedRoute>
+  },
+  {
+    path: "/conquistas",
+    element: <ProtectedRoute><Conquistas /></ProtectedRoute>
+  },
+  {
+    path: "/admin/*",
+    element: <ProtectedRoute requireAdmin><Admin /></ProtectedRoute>
+  },
+  {
+    path: "*",
+    element: <NotFound />
+  }
+]);

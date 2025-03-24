@@ -1,41 +1,43 @@
-
-import { Button } from "@/components/ui/custom/Button";
-import { cn } from "@/lib/utils";
-import { ChevronDown, Menu, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/custom/Button";
+import { Menu, X, User, LogOut, Settings, Trophy, ChevronDown } from "lucide-react";
+import NavigationItem from "./NavigationItem";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, logout, isAdmin } = useAuth();
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      setIsScrolled(window.scrollY > 0);
     };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Toggle mobile menu
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
-    // Prevent scrolling when menu is open
-    if (!mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
-    }
   };
 
-  // Handle navigation
+  const toggleUserMenu = () => {
+    setUserMenuOpen(!userMenuOpen);
+  };
+
   const handleNavigation = (path: string) => {
     navigate(path);
-    if (mobileMenuOpen) {
-      toggleMobileMenu();
-    }
+    setMobileMenuOpen(false);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
   };
 
   return (
@@ -78,12 +80,73 @@ const Header = () => {
 
           {/* Authentication Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="subtle" size="sm" onClick={() => handleNavigation("/login")}>
-              Entrar
-            </Button>
-            <Button size="sm" onClick={() => handleNavigation("/registro")}>
-              Cadastrar
-            </Button>
+            {user ? (
+              <div className="relative">
+                <Button
+                  variant="subtle"
+                  size="sm"
+                  onClick={toggleUserMenu}
+                  className="flex items-center space-x-2"
+                >
+                  <User className="h-4 w-4" />
+                  <span>{user.username}</span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                    <div className="py-1" role="menu">
+                      <Link
+                        to="/perfil"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Perfil
+                      </Link>
+                      <Link
+                        to="/conquistas"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Trophy className="h-4 w-4 mr-2" />
+                        Conquistas
+                      </Link>
+                      {isAdmin && (
+                        <Link
+                          to="/admin"
+                          className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          role="menuitem"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          Admin
+                        </Link>
+                      )}
+                      <button
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Sair
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Button variant="subtle" size="sm" onClick={() => handleNavigation("/login")}>
+                  Entrar
+                </Button>
+                <Button size="sm" onClick={() => handleNavigation("/registro")}>
+                  Cadastrar
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -124,66 +187,40 @@ const Header = () => {
         </nav>
         
         <div className="mt-8 flex flex-col space-y-4">
-          <Button variant="subtle" width="full" onClick={() => handleNavigation("/login")}>
-            Entrar
-          </Button>
-          <Button width="full" onClick={() => handleNavigation("/registro")}>
-            Cadastrar
-          </Button>
+          {user ? (
+            <>
+              <Button variant="subtle" width="full" onClick={() => handleNavigation("/perfil")}>
+                <User className="h-4 w-4 mr-2" />
+                Perfil
+              </Button>
+              <Button variant="subtle" width="full" onClick={() => handleNavigation("/conquistas")}>
+                <Trophy className="h-4 w-4 mr-2" />
+                Conquistas
+              </Button>
+              {isAdmin && (
+                <Button variant="subtle" width="full" onClick={() => handleNavigation("/admin")}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Admin
+                </Button>
+              )}
+              <Button width="full" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="subtle" width="full" onClick={() => handleNavigation("/login")}>
+                Entrar
+              </Button>
+              <Button width="full" onClick={() => handleNavigation("/registro")}>
+                Cadastrar
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
-  );
-};
-
-interface NavigationItemProps {
-  label: string;
-  href: string;
-  children?: React.ReactNode;
-}
-
-const NavigationItem = ({ label, href, children }: NavigationItemProps) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    navigate(href);
-  };
-
-  if (children) {
-    return (
-      <div 
-        className="relative"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <div 
-          onClick={handleClick}
-          className="flex items-center space-x-1 text-foreground hover:text-primary transition-colors cursor-pointer"
-        >
-          <span>{label}</span>
-          <ChevronDown className={cn(
-            "h-4 w-4 transition-transform", 
-            isHovered && "rotate-180"
-          )} />
-        </div>
-        
-        {isHovered && (
-          <div className="absolute top-full left-0 pt-2 z-10 animate-fade-in">
-            {children}
-          </div>
-        )}
-      </div>
-    );
-  }
-  
-  return (
-    <div 
-      onClick={handleClick}
-      className="text-foreground hover:text-primary transition-colors cursor-pointer"
-    >
-      {label}
-    </div>
   );
 };
 

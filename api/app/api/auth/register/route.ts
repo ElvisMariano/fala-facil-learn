@@ -10,6 +10,20 @@ const registerSchema = z.object({
   role: z.enum(['STUDENT', 'ADMIN']).default('STUDENT'),
 })
 
+// Função para lidar com requisições OPTIONS (preflight)
+export async function OPTIONS(request: Request) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+      'Access-Control-Max-Age': '86400',
+      'Access-Control-Allow-Credentials': 'true',
+    },
+  });
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -23,10 +37,17 @@ export async function POST(request: Request) {
     })
 
     if (userExists) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Email já cadastrado' },
         { status: 400 }
-      )
+      );
+      
+      // Adicionar cabeçalhos CORS diretamente à resposta
+      response.headers.set('Access-Control-Allow-Origin', '*');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      
+      return response;
     }
 
     // Cria o hash da senha
@@ -49,22 +70,47 @@ export async function POST(request: Request) {
       }
     })
 
-    return NextResponse.json({
-      user,
+    const response = NextResponse.json({
+      status: 'success',
+      data: {
+        user,
+        token: null // Não geramos token no registro, apenas no login
+      },
       message: 'Usuário registrado com sucesso'
-    })
+    });
+    
+    // Adicionar cabeçalhos CORS diretamente à resposta
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: error.errors[0].message },
         { status: 400 }
-      )
+      );
+      
+      // Adicionar cabeçalhos CORS diretamente à resposta
+      response.headers.set('Access-Control-Allow-Origin', '*');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      
+      return response;
     }
 
     console.error('Erro ao registrar usuário:', error)
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
-    )
+    );
+    
+    // Adicionar cabeçalhos CORS diretamente à resposta
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    
+    return response;
   }
 } 

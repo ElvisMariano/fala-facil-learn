@@ -9,6 +9,20 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
 })
 
+// Função para lidar com requisições OPTIONS (preflight)
+export async function OPTIONS(request: Request) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+      'Access-Control-Max-Age': '86400',
+      'Access-Control-Allow-Credentials': 'true',
+    },
+  });
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -30,20 +44,34 @@ export async function POST(request: Request) {
     })
 
     if (!user) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Credenciais inválidas' },
         { status: 401 }
-      )
+      );
+      
+      // Adicionar cabeçalhos CORS
+      response.headers.set('Access-Control-Allow-Origin', '*');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      
+      return response;
     }
 
     // Verifica a senha
     const passwordMatch = await compare(password, user.passwordHash)
 
     if (!passwordMatch) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Credenciais inválidas' },
         { status: 401 }
-      )
+      );
+      
+      // Adicionar cabeçalhos CORS
+      response.headers.set('Access-Control-Allow-Origin', '*');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      
+      return response;
     }
 
     // Gera o token JWT
@@ -73,27 +101,51 @@ export async function POST(request: Request) {
     const { passwordHash, ...userWithoutPassword } = user
 
     // Retorna os dados do usuário e o token
-    return NextResponse.json({
-      user: userWithoutPassword,
-      token,
+    const response = NextResponse.json({
+      status: 'success',
+      data: {
+        user: userWithoutPassword,
+        token,
+      },
       message: 'Login realizado com sucesso'
     }, {
       headers: {
         'Set-Cookie': `token=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}`
       }
-    })
+    });
+    
+    // Adicionar cabeçalhos CORS
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: error.errors[0].message },
         { status: 400 }
-      )
+      );
+      
+      // Adicionar cabeçalhos CORS
+      response.headers.set('Access-Control-Allow-Origin', '*');
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      
+      return response;
     }
 
     console.error('Erro no login:', error)
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
-    )
+    );
+    
+    // Adicionar cabeçalhos CORS
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    
+    return response;
   }
 } 

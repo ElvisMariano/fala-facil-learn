@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/custom/Card";
@@ -6,19 +5,20 @@ import { Button } from "@/components/ui/custom/Button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AtSign, Eye, EyeOff, Lock, User, CheckCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Registro = () => {
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { register, loading, error: authError } = useAuth();
   const [error, setError] = useState("");
   
   const navigate = useNavigate();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     
@@ -28,15 +28,12 @@ const Registro = () => {
       return;
     }
     
-    setLoading(true);
-    
-    // Simulate registration
-    setTimeout(() => {
-      // In a real app, this would make an API call to register the user
-      localStorage.setItem("user", JSON.stringify({ email, name }));
-      navigate("/dashboard");
-      setLoading(false);
-    }, 1000);
+    try {
+      await register(username, email, password);
+      navigate("/login");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Erro ao criar conta. Tente novamente.");
+    }
   };
   
   // Password strength indicators
@@ -59,26 +56,26 @@ const Registro = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {error && (
+              {(error || authError) && (
                 <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md mb-4">
-                  {error}
+                  {error || authError}
                 </div>
               )}
               
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="name" className="text-sm font-medium">
-                    Nome
+                  <label htmlFor="username" className="text-sm font-medium">
+                    Nome de Usuário
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input
-                      id="name"
+                      id="username"
                       type="text"
-                      placeholder="Seu nome"
+                      placeholder="Seu nome de usuário"
                       className="w-full pl-10 pr-4 py-2 border rounded-lg"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                       required
                     />
                   </div>
@@ -131,36 +128,34 @@ const Registro = () => {
                   </div>
                   
                   {/* Password strength indicator */}
-                  {password && (
-                    <div className="space-y-2 mt-2">
-                      <div className="flex flex-wrap gap-2 text-xs">
-                        <div className={`px-2 py-1 rounded-full ${hasMinLength ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
-                          <div className="flex items-center gap-1">
-                            {hasMinLength && <CheckCircle className="h-3 w-3" />}
-                            Mínimo 8 caracteres
-                          </div>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <div className={`px-2 py-1 rounded-full ${hasMinLength ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
+                        <div className="flex items-center gap-1">
+                          {hasMinLength && <CheckCircle className="h-3 w-3" />}
+                          Mínimo 8 caracteres
                         </div>
-                        <div className={`px-2 py-1 rounded-full ${hasUpperCase ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
-                          <div className="flex items-center gap-1">
-                            {hasUpperCase && <CheckCircle className="h-3 w-3" />}
-                            Letra maiúscula
-                          </div>
+                      </div>
+                      <div className={`px-2 py-1 rounded-full ${hasUpperCase ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
+                        <div className="flex items-center gap-1">
+                          {hasUpperCase && <CheckCircle className="h-3 w-3" />}
+                          Letra maiúscula
                         </div>
-                        <div className={`px-2 py-1 rounded-full ${hasLowerCase ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
-                          <div className="flex items-center gap-1">
-                            {hasLowerCase && <CheckCircle className="h-3 w-3" />}
-                            Letra minúscula
-                          </div>
+                      </div>
+                      <div className={`px-2 py-1 rounded-full ${hasLowerCase ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
+                        <div className="flex items-center gap-1">
+                          {hasLowerCase && <CheckCircle className="h-3 w-3" />}
+                          Letra minúscula
                         </div>
-                        <div className={`px-2 py-1 rounded-full ${hasNumber ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
-                          <div className="flex items-center gap-1">
-                            {hasNumber && <CheckCircle className="h-3 w-3" />}
-                            Número
-                          </div>
+                      </div>
+                      <div className={`px-2 py-1 rounded-full ${hasNumber ? 'bg-accent/20 text-accent' : 'bg-muted text-muted-foreground'}`}>
+                        <div className="flex items-center gap-1">
+                          {hasNumber && <CheckCircle className="h-3 w-3" />}
+                          Número
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
@@ -206,7 +201,7 @@ const Registro = () => {
                   {loading ? "Registrando..." : "Criar Conta"}
                 </Button>
                 
-                <div className="relative my-4">
+                <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t"></div>
                   </div>
@@ -242,7 +237,7 @@ const Registro = () => {
                 </div>
               </form>
               
-              <div className="text-center mt-6">
+              <div className="mt-4 text-center">
                 <p className="text-sm">
                   Já tem uma conta?{" "}
                   <Link to="/login" className="text-primary hover:underline">

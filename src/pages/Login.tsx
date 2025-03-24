@@ -1,37 +1,33 @@
-
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AtSign, Eye, EyeOff, Lock } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const { login, loading, error: authError } = useAuth();
   const [error, setError] = useState("");
   
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as any)?.from?.pathname || "/dashboard";
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
     
-    // Simulate authentication
-    setTimeout(() => {
-      if (email === "demo@example.com" && password === "password") {
-        // Successful login
-        localStorage.setItem("user", JSON.stringify({ email, name: "Usuário Demo" }));
-        navigate("/dashboard");
-      } else {
-        setError("Email ou senha incorretos.");
-      }
-      setLoading(false);
-    }, 1000);
+    try {
+      await login(email, password);
+      navigate(from, { replace: true });
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Erro ao fazer login. Tente novamente.");
+    }
   };
   
   return (
@@ -48,9 +44,9 @@ const Login = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {error && (
+              {(error || authError) && (
                 <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md mb-4">
-                  {error}
+                  {error || authError}
                 </div>
               )}
               
@@ -111,7 +107,7 @@ const Login = () => {
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
                 
-                <div className="relative my-4">
+                <div className="relative">
                   <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t"></div>
                   </div>
@@ -147,7 +143,7 @@ const Login = () => {
                 </div>
               </form>
               
-              <div className="text-center mt-6">
+              <div className="mt-4 text-center">
                 <p className="text-sm">
                   Não tem uma conta?{" "}
                   <Link to="/registro" className="text-primary hover:underline">
