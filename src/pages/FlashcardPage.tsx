@@ -4,140 +4,57 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/custom/Button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { Volume2, RefreshCw, CheckCircle, X, ChevronLeft, ChevronRight, Search, BarChart3, VolumeX } from "lucide-react";
+import { Volume2, RefreshCw, CheckCircle, X, ChevronLeft, ChevronRight, Search, BarChart3, VolumeX, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { playAudio } from "@/utils/audioUtils";
 import { toast } from "sonner";
+import api from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// Sample flashcard decks data
-const flashcardDecks = [
-  {
-    id: "basic-vocabulary",
-    title: "Vocabulário Básico",
-    description: "Palavras essenciais para iniciantes",
-    cards: 50,
-    level: "A1",
-    progress: 75,
-    color: "from-green-500 to-emerald-600",
-    lastPracticed: "2023-07-12T15:30:00",
-    nextReview: "2023-07-17T10:00:00",
-    availableForReview: true,
-    locked: false
-  },
-  {
-    id: "travel-phrases",
-    title: "Frases para Viagem",
-    description: "Expressões úteis para turistas",
-    cards: 35,
-    level: "A2",
-    progress: 40,
-    color: "from-blue-500 to-indigo-600",
-    lastPracticed: "2023-07-10T09:20:00",
-    nextReview: "2023-07-15T14:30:00",
-    availableForReview: true,
-    locked: false
-  },
-  {
-    id: "business-english",
-    title: "Inglês para Negócios",
-    description: "Termos comuns no ambiente de trabalho",
-    cards: 65,
-    level: "B1-B2",
-    progress: 25,
-    color: "from-purple-500 to-violet-600",
-    lastPracticed: "2023-07-05T14:15:00",
-    nextReview: "2023-07-18T09:00:00",
-    availableForReview: false,
-    locked: false
-  },
-  {
-    id: "phrasal-verbs",
-    title: "Phrasal Verbs",
-    description: "Verbos frasais comuns em inglês",
-    cards: 40,
-    level: "B2",
-    progress: 15,
-    color: "from-amber-500 to-orange-600",
-    lastPracticed: "2023-06-28T10:45:00",
-    nextReview: "2023-07-14T11:15:00",
-    availableForReview: true,
-    locked: false
-  },
-  {
-    id: "idioms",
-    title: "Expressões Idiomáticas",
-    description: "Expressões comuns e seus significados",
-    cards: 30,
-    level: "C1",
-    progress: 5,
-    color: "from-red-500 to-rose-600",
-    lastPracticed: "2023-06-15T16:30:00",
-    nextReview: "2023-08-01T16:30:00",
-    availableForReview: false,
-    locked: true
-  },
-];
+// Types for our flashcard data
+interface FlashcardDeck {
+  id: string;
+  title: string;
+  description: string;
+  cardCount: number;
+  level: string;
+  progress: number;
+  color: string;
+  lastPracticed: string;
+  nextReview: string;
+  availableForReview: boolean;
+  locked: boolean;
+  category: string;
+}
 
-// Sample flashcards for a specific deck
-const sampleFlashcards = [
-  {
-    id: 1,
-    front: "Hello",
-    back: "Olá",
-    example: "Hello, how are you today?",
-    level: "A1",
-    lastReviewed: "2023-07-12T15:30:00",
-    nextReview: "2023-07-15T00:00:00",
-    difficulty: "easy"
-  },
-  {
-    id: 2,
-    front: "Goodbye",
-    back: "Adeus",
-    example: "Goodbye, see you tomorrow!",
-    level: "A1",
-    lastReviewed: "2023-07-11T10:20:00",
-    nextReview: "2023-07-14T00:00:00",
-    difficulty: "medium"
-  },
-  {
-    id: 3,
-    front: "Thank you",
-    back: "Obrigado/Obrigada",
-    example: "Thank you for your help!",
-    level: "A1",
-    lastReviewed: "2023-07-10T14:45:00",
-    nextReview: "2023-07-13T00:00:00",
-    difficulty: "easy"
-  },
-  {
-    id: 4,
-    front: "Please",
-    back: "Por favor",
-    example: "Please, can you help me?",
-    level: "A1",
-    lastReviewed: "2023-07-09T09:15:00",
-    nextReview: "2023-07-13T00:00:00",
-    difficulty: "easy"
-  },
-  {
-    id: 5,
-    front: "Excuse me",
-    back: "Com licença",
-    example: "Excuse me, where is the bathroom?",
-    level: "A1",
-    lastReviewed: "2023-07-08T16:30:00",
-    nextReview: "2023-07-12T00:00:00",
-    difficulty: "medium"
-  },
-];
+interface Flashcard {
+  id: number;
+  front: string;
+  back: string;
+  example: string;
+  level: string;
+  lastReviewed: string;
+  nextReview: string;
+  difficulty: string;
+}
 
 const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) => void }) => {
   const [searchTerm, setSearchTerm] = useState("");
   
+  // Fetch flashcard decks from the API
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['flashcardDecks'],
+    queryFn: async () => {
+      const response = await api.get('/flashcards');
+      return response.data;
+    }
+  });
+  
+  const flashcardDecks = data?.flashcards || [];
+  
   // Filter decks based on search term
-  const filteredDecks = flashcardDecks.filter(deck => 
+  const filteredDecks = flashcardDecks.filter((deck: FlashcardDeck) => 
     deck.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     deck.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -152,6 +69,30 @@ const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) =
       minute: '2-digit'
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto max-w-7xl py-10">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto max-w-7xl py-10">
+        <div className="text-center py-8">
+          <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
+          <h3 className="text-lg font-medium mb-2">Erro ao carregar flashcards</h3>
+          <p className="text-muted-foreground mb-4">
+            Não foi possível carregar os conjuntos de flashcards. Tente novamente mais tarde.
+          </p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto max-w-7xl py-10">
@@ -174,67 +115,73 @@ const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) =
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredDecks.map((deck) => (
-          <Card key={deck.id} className={`h-full hover:shadow-lg transition-all overflow-hidden flex flex-col ${deck.locked ? 'opacity-70' : ''}`}>
-            <div className={`h-3 w-full bg-gradient-to-r ${deck.color}`}></div>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle>{deck.title}</CardTitle>
-                <span className="px-2 py-0.5 bg-muted rounded-full text-xs font-medium">
-                  {deck.level}
-                </span>
-              </div>
-              <CardDescription>{deck.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow flex flex-col justify-between">
-              <div className="space-y-4 mb-6">
-                <div className="flex justify-between text-sm">
-                  <span>{deck.cards} cartões</span>
-                  <span>{deck.progress}% completado</span>
+        {filteredDecks.length > 0 ? (
+          filteredDecks.map((deck: FlashcardDeck) => (
+            <Card key={deck.id} className={`h-full hover:shadow-lg transition-all overflow-hidden flex flex-col ${deck.locked ? 'opacity-70' : ''}`}>
+              <div className={`h-3 w-full bg-gradient-to-r ${deck.color}`}></div>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <CardTitle>{deck.title}</CardTitle>
+                  <span className="px-2 py-0.5 bg-muted rounded-full text-xs font-medium">
+                    {deck.level}
+                  </span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                  <div 
-                    className={`h-full rounded-full bg-gradient-to-r ${deck.color}`} 
-                    style={{ width: `${deck.progress}%` }}
-                  ></div>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Último estudo: {new Date(deck.lastPracticed).toLocaleDateString('pt-BR', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                <CardDescription>{deck.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow flex flex-col justify-between">
+                <div className="space-y-4 mb-6">
+                  <div className="flex justify-between text-sm">
+                    <span>{deck.cardCount} cartões</span>
+                    <span>{deck.progress}% completado</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                    <div 
+                      className={`h-full rounded-full bg-gradient-to-r ${deck.color}`} 
+                      style={{ width: `${deck.progress}%` }}
+                    ></div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Último estudo: {new Date(deck.lastPracticed).toLocaleDateString('pt-BR', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                  
+                  {!deck.availableForReview && (
+                    <div className="text-xs text-primary font-medium">
+                      Próxima revisão: {formatNextReview(deck.nextReview)}
+                    </div>
+                  )}
                 </div>
                 
-                {!deck.availableForReview && (
-                  <div className="text-xs text-primary font-medium">
-                    Próxima revisão: {formatNextReview(deck.nextReview)}
-                  </div>
+                <div className="flex gap-2">
+                  <Button 
+                    className="flex-1" 
+                    onClick={() => onStartStudy(deck.id)}
+                    disabled={!deck.availableForReview || deck.locked}
+                  >
+                    {deck.locked ? 'Bloqueado' : (deck.availableForReview ? 'Estudar' : 'Indisponível')}
+                  </Button>
+                  <Button variant="outline" className="px-3">
+                    <BarChart3 className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                {deck.locked && (
+                  <p className="text-xs text-center text-muted-foreground mt-2">
+                    Este deck será desbloqueado quando você alcançar o nível adequado.
+                  </p>
                 )}
-              </div>
-              
-              <div className="flex gap-2">
-                <Button 
-                  className="flex-1" 
-                  onClick={() => onStartStudy(deck.id)}
-                  disabled={!deck.availableForReview || deck.locked}
-                >
-                  {deck.locked ? 'Bloqueado' : (deck.availableForReview ? 'Estudar' : 'Indisponível')}
-                </Button>
-                <Button variant="outline" className="px-3">
-                  <BarChart3 className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              {deck.locked && (
-                <p className="text-xs text-center text-muted-foreground mt-2">
-                  Este deck será desbloqueado quando você alcançar o nível adequado.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="col-span-3 text-center py-10 bg-muted/20 rounded-lg">
+            <p className="text-muted-foreground">Nenhum conjunto de flashcards encontrado</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -248,14 +195,65 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
   const [completedCards, setCompletedCards] = useState<number[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
   
-  const currentCard = sampleFlashcards[currentIndex];
+  // Fetch flashcards for the selected deck
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['flashcards', deckId],
+    queryFn: async () => {
+      const response = await api.get(`/flashcards/${deckId}/cards`);
+      return response.data;
+    },
+  });
+
+  const flashcards = data?.cards || [];
+  const deckInfo = data?.deck || { title: "Vocabulário" };
+  
+  const queryClient = useQueryClient();
+
+  // Update flashcard progress
+  const progressMutation = useMutation({
+    mutationFn: async (data: { cardId: number, difficulty: string }) => {
+      return api.post(`/flashcards/${deckId}/progress`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['flashcards'] });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto max-w-5xl py-10">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || flashcards.length === 0) {
+    return (
+      <div className="container mx-auto max-w-5xl py-10">
+        <div className="text-center py-8">
+          <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
+          <h3 className="text-lg font-medium mb-2">Erro ao carregar flashcards</h3>
+          <p className="text-muted-foreground mb-4">
+            Não foi possível carregar os cartões para este deck. Tente novamente mais tarde.
+          </p>
+          <Button onClick={onBackToDeck}>
+            Voltar para Decks
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  const currentCard = flashcards[currentIndex];
   
   const flipCard = () => {
     setIsFlipped(!isFlipped);
   };
   
   const nextCard = () => {
-    if (currentIndex < sampleFlashcards.length - 1) {
+    if (currentIndex < flashcards.length - 1) {
       setDirection(1);
       setExiting(true);
       setTimeout(() => {
@@ -282,8 +280,11 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
   };
   
   const markDifficulty = (difficulty: string) => {
-    // In a real app, this would update the card's difficulty and schedule the next review
-    console.log(`Card ${currentCard.id} marked as ${difficulty}`);
+    // Update card's difficulty and schedule the next review
+    progressMutation.mutate({
+      cardId: currentCard.id,
+      difficulty
+    });
     
     const updatedCompletedCards = [...completedCards];
     if (!updatedCompletedCards.includes(currentCard.id)) {
@@ -291,9 +292,9 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
     }
     setCompletedCards(updatedCompletedCards);
     
-    if (currentIndex < sampleFlashcards.length - 1) {
+    if (currentIndex < flashcards.length - 1) {
       nextCard();
-    } else if (updatedCompletedCards.length === sampleFlashcards.length) {
+    } else if (updatedCompletedCards.length === flashcards.length) {
       // All cards reviewed
       setIsCompleted(true);
     }
@@ -347,7 +348,7 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
             <div className="p-6 bg-muted/20 rounded-lg">
               <h3 className="font-medium mb-4">Próximas revisões:</h3>
               <div className="space-y-2">
-                {sampleFlashcards.map(card => (
+                {flashcards.map((card: Flashcard) => (
                   <div key={card.id} className="flex justify-between items-center p-2 border-b">
                     <span className="font-medium">{card.front}</span>
                     <span>Próxima revisão: {getNextReviewDate(card.difficulty)}</span>
@@ -373,7 +374,7 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
           Voltar para Decks
         </Button>
         <h1 className="text-2xl font-display font-bold">
-          {flashcardDecks.find(deck => deck.id === deckId)?.title || "Vocabulário"}
+          {deckInfo.title}
         </h1>
       </div>
       
@@ -452,7 +453,7 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
                       className="flex items-center gap-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePlayAudio(currentCard.front);
+                        handlePlayAudio(currentCard.back);
                       }}
                     >
                       <Volume2 className="h-4 w-4" />
@@ -464,7 +465,7 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
                       className="flex items-center gap-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePlayAudio(currentCard.front, true);
+                        handlePlayAudio(currentCard.back, true);
                       }}
                     >
                       <VolumeX className="h-4 w-4" />
@@ -476,19 +477,12 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
             </motion.div>
           </AnimatePresence>
         </div>
-        
       
       {/* Flashcard controls */}
       <div className="flex justify-center mb-1 gap-1">
         <Button variant="outline" size="sm" onClick={prevCard} disabled={currentIndex === 0}>
           <ChevronLeft className="h-8 w-12" />
         </Button>
-        {/* <Button variant="outline" size="sm" onClick={flipCard}>
-          <RefreshCw className="h-4 w-4" />
-        </Button>
-        <Button variant="outline" size="sm" onClick={nextCard} disabled={currentIndex === sampleFlashcards.length - 1}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>*/}
       </div>
       
       {/* Difficulty buttons */}
@@ -524,14 +518,14 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
             <CardHeader>
               <CardTitle>Informações do Estudo</CardTitle>
               <CardDescription>
-                Cartão {currentIndex + 1} de {sampleFlashcards.length}
+                Cartão {currentIndex + 1} de {flashcards.length}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                 <div 
                   className="h-full bg-primary rounded-full"
-                  style={{ width: `${(completedCards.length / sampleFlashcards.length) * 100}%` }}
+                  style={{ width: `${(completedCards.length / flashcards.length) * 100}%` }}
                 ></div>
               </div>
               
@@ -562,7 +556,10 @@ const FlashcardPage = () => {
   const [activeDeckId, setActiveDeckId] = useState("");
   
   const handleStartStudy = (deckId: string) => {
-    const deck = flashcardDecks.find(d => d.id === deckId);
+    const queryClient = useQueryClient();
+    const decks = queryClient.getQueryData<{flashcards: FlashcardDeck[]}>(['flashcardDecks']);
+    const deck = decks?.flashcards.find(d => d.id === deckId);
+    
     if (deck && !deck.availableForReview) {
       toast.info(`Este deck não está disponível para estudo no momento. Próxima revisão: ${new Date(deck.nextReview).toLocaleDateString('pt-BR')}`);
       return;
