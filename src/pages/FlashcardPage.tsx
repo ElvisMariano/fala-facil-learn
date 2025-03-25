@@ -45,9 +45,26 @@ const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) =
   const { data, isLoading, error } = useQuery({
     queryKey: ['flashcardDecks'],
     queryFn: async () => {
-      const response = await api.get('/flashcards');
-      return response.data;
-    }
+      try {
+        const response = await api.get('/flashcards');
+        // Processa os decks para definir disponibilidade
+        if (response.data?.flashcards) {
+          response.data.flashcards = response.data.flashcards.map((deck: FlashcardDeck) => ({
+            ...deck,
+            // Se não tiver data de próxima revisão ou se a data já passou, está disponível
+            availableForReview: !deck.nextReview || new Date(deck.nextReview) <= new Date(),
+            // Se não tiver data do último estudo, usa a data atual
+            lastPracticed: deck.lastPracticed || new Date().toISOString()
+          }));
+        }
+        return response.data;
+      } catch (error) {
+        console.error('Erro ao buscar flashcards:', error);
+        throw error;
+      }
+    },
+    retry: 1,
+    staleTime: 1000 * 60 * 5, // Cache por 5 minutos
   });
   
   const flashcardDecks = data?.flashcards || [];
@@ -60,6 +77,19 @@ const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) =
   
   // Format date for next review
   const formatNextReview = (dateString: string) => {
+    if (!dateString) return 'Disponível agora';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Format last practiced date
+  const formatLastPracticed = (dateString: string) => {
+    if (!dateString) return 'Nunca estudado';
     const date = new Date(dateString);
     return date.toLocaleDateString('pt-BR', {
       day: 'numeric',
@@ -140,12 +170,7 @@ const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) =
                     ></div>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    Último estudo: {new Date(deck.lastPracticed).toLocaleDateString('pt-BR', {
-                      day: 'numeric',
-                      month: 'short',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    Último estudo: {formatLastPracticed(deck.lastPracticed)}
                   </div>
                   
                   {!deck.availableForReview && (
@@ -159,9 +184,11 @@ const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) =
                   <Button 
                     className="flex-1" 
                     onClick={() => onStartStudy(deck.id)}
-                    disabled={!deck.availableForReview || deck.locked}
+                    disabled={deck.locked || (deck.cardCount === 0)}
                   >
-                    {deck.locked ? 'Bloqueado' : (deck.availableForReview ? 'Estudar' : 'Indisponível')}
+                    {deck.locked ? 'Bloqueado' : 
+                     (deck.cardCount === 0 ? 'Sem cartões' : 
+                      (!deck.availableForReview ? 'Indisponível' : 'Estudar'))}
                   </Button>
                   <Button variant="outline" className="px-3">
                     <BarChart3 className="h-4 w-4" />
@@ -171,6 +198,16 @@ const FlashcardDecksList = ({ onStartStudy }: { onStartStudy: (deckId: string) =
                 {deck.locked && (
                   <p className="text-xs text-center text-muted-foreground mt-2">
                     Este deck será desbloqueado quando você alcançar o nível adequado.
+                  </p>
+                )}
+                {!deck.locked && deck.cardCount === 0 && (
+                  <p className="text-xs text-center text-muted-foreground mt-2">
+                    Este deck ainda não possui cartões para estudo.
+                  </p>
+                )}
+                {!deck.locked && deck.cardCount > 0 && !deck.availableForReview && (
+                  <p className="text-xs text-center text-muted-foreground mt-2">
+                    Próxima revisão disponível em: {formatNextReview(deck.nextReview)}
                   </p>
                 )}
               </CardContent>
@@ -576,14 +613,23 @@ const FlashcardPage = () => {
       return;
     }
     
-    if (!deck.availableForReview) {
-      toast.info(`Este deck não está disponível para estudo no momento. Próxima revisão: ${new Date(deck.nextReview).toLocaleDateString('pt-BR')}`);
-      return;
-    }
-    
     if (deck.locked) {
       toast.error("Este deck está bloqueado. Complete os níveis anteriores para desbloqueá-lo.");
       return;
+    }
+
+    if (!deck.availableForReview && deck.nextReview) {
+      const nextReview = new Date(deck.nextReview);
+      const now = new Date();
+      if (nextReview > now) {
+        toast.info(`Este deck não está disponível para estudo no momento. Próxima revisão: ${nextReview.toLocaleDateString('pt-BR', {
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}`);
+        return;
+      }
     }
     
     setActiveDeckId(deckId);
