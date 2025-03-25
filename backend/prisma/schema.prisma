@@ -20,7 +20,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   profile      Profile?
-  achievements Achievement[]
+  progress     FlashcardProgress[]
 
   @@map("users")
 }
@@ -41,43 +41,20 @@ model Profile {
   @@map("profiles")
 }
 
-model Lesson {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  level       String
-  category    String
-  content     String
-  status      String   @default("draft")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  progress    LessonProgress[]
-
-  @@map("lessons")
-}
-
-model LessonProgress {
-  id          Int       @id @default(autoincrement())
-  userId      Int
-  lessonId    Int
-  status      String    @default("not_started") // not_started, in_progress, completed
-  score       Int?
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, lessonId])
-}
-
 model FlashcardDeck {
   id          Int      @id @default(autoincrement())
   title       String
   description String?
-  level       String
+  level       String   // beginner, intermediate, advanced
+  category    String?  // vocabulary, grammar, phrases, idioms
+  difficulty  String   @default("medium") // easy, medium, hard
+  locked      Boolean  @default(false)
+  isFavorite  Boolean  @default(false)
+  nextReviewDate DateTime?
+  lastStudyDate  DateTime?
+  achievements String[] @default([])
+  tags        String[] @default([])
+  estimatedTimeMinutes Int @default(5)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -97,52 +74,26 @@ model Flashcard {
   updatedAt DateTime @updatedAt
 
   deck      FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  progress  FlashcardProgress[]
 
   @@map("flashcards")
 }
 
 model FlashcardProgress {
-  id          Int       @id @default(autoincrement())
-  userId      Int
-  deckId      Int
-  status      String    @default("not_started") // not_started, in_progress, completed
-  score       Int?
-  completedAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deck FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, deckId])
-}
-
-model Achievement {
-  id          Int       @id @default(autoincrement())
-  userId      Int
-  title       String
-  description String
-  category    String
-  xp          Int
-  progress    Int       @default(0)
-  target      Int
-  earned      Boolean   @default(false)
-  earnedAt    DateTime?
-  createdAt   DateTime  @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("achievements")
-}
-
-model UserAchievement {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   userId        Int
-  achievementId Int
-  earnedAt      DateTime @default(now())
+  deckId        Int
+  cardId        Int
+  difficulty    String    @default("medium")
+  lastStudiedAt DateTime  @default(now())
+  studyCount    Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck          FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  card          Flashcard     @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, achievementId])
+  @@unique([userId, deckId, cardId])
+  @@map("flashcard_progress")
 } 

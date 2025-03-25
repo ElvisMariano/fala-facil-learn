@@ -10,6 +10,12 @@ import { playAudio } from "@/utils/audioUtils";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { DeckFilters } from '@/components/flashcards/DeckFilters';
+import { DeckCard } from '@/components/flashcards/DeckCard';
+import { DeckStats } from '@/components/flashcards/DeckStats';
+import { LevelProgress } from '@/components/flashcards/LevelProgress';
+import { useFlashcardStore } from '@/store/flashcardStore';
+import { FlashcardDeck } from '@/types/flashcard.types';
 
 // Types for our flashcard data
 interface FlashcardDeck {
@@ -594,64 +600,104 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
   );
 };
 
-const FlashcardPage = () => {
-  const [activeView, setActiveView] = useState("decks"); // "decks" or "study"
-  const [activeDeckId, setActiveDeckId] = useState("");
-  const queryClient = useQueryClient();
-  
+const FlashcardPage: React.FC = () => {
+  const [studyMode, setStudyMode] = useState(false);
+  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
+  const { decks, setDecks, calculateLevelProgress, currentLevel, levelProgress } = useFlashcardStore();
+
+  // Fetch decks from API
+  const { data: decksData, isLoading } = useQuery({
+    queryKey: ['flashcardDecks'],
+    queryFn: async () => {
+      const response = await api.get('/flashcards');
+      // Transform API response to match FlashcardDeck interface
+      const transformedDecks = response.data.flashcards.map((deck: any) => ({
+        ...deck,
+        progress: {
+          totalCards: deck.cardCount || 0,
+          completedCards: deck.progress || 0,
+          correctAnswers: deck.correctAnswers || 0,
+          streakDays: deck.streakDays || 0,
+          lastStudyDate: deck.lastPracticed || new Date().toISOString(),
+          nextReviewDate: deck.nextReview || null
+        }
+      }));
+      return { ...response.data, flashcards: transformedDecks };
+    },
+  });
+
+  // Update store when decks are loaded
+  useEffect(() => {
+    if (decksData?.flashcards) {
+      setDecks(decksData.flashcards);
+    }
+  }, [decksData, setDecks]);
+
+  useEffect(() => {
+    calculateLevelProgress();
+  }, [decks, calculateLevelProgress]);
+
   const handleStartStudy = (deckId: string) => {
-    const decks = queryClient.getQueryData<{flashcards: FlashcardDeck[]}>(['flashcardDecks']);
-    const deck = decks?.flashcards.find(d => d.id === deckId);
-    
-    if (!deck) {
-      toast.error("Deck não encontrado.");
-      return;
-    }
-
-    if (deck.cardCount === 0) {
-      toast.error("Este deck não possui cartões para estudo.");
-      return;
-    }
-    
-    if (deck.locked) {
-      toast.error("Este deck está bloqueado. Complete os níveis anteriores para desbloqueá-lo.");
-      return;
-    }
-
-    if (!deck.availableForReview && deck.nextReview) {
-      const nextReview = new Date(deck.nextReview);
-      const now = new Date();
-      if (nextReview > now) {
-        toast.info(`Este deck não está disponível para estudo no momento. Próxima revisão: ${nextReview.toLocaleDateString('pt-BR', {
-          day: 'numeric',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit'
-        })}`);
-        return;
-      }
-    }
-    
-    setActiveDeckId(deckId);
-    setActiveView("study");
+    setSelectedDeckId(deckId);
+    setStudyMode(true);
   };
-  
+
   const handleBackToDeck = () => {
-    setActiveView("decks");
+    setStudyMode(false);
+    setSelectedDeckId(null);
   };
-  
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-background">
       <Header />
-      
-      <main className="flex-1 py-6 px-6">
-        {activeView === "decks" ? (
-          <FlashcardDecksList onStartStudy={handleStartStudy} />
+      <main className="container mx-auto px-4 py-8">
+        {studyMode && selectedDeckId ? (
+          <FlashcardStudy onBackToDeck={handleBackToDeck} deckId={selectedDeckId} />
         ) : (
-          <FlashcardStudy onBackToDeck={handleBackToDeck} deckId={activeDeckId} />
+          <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
+            {/* Sidebar */}
+            <div className="space-y-6">
+              <DeckFilters />
+              <LevelProgress currentLevel={currentLevel} levelProgress={levelProgress} />
+            </div>
+
+            {/* Main Content */}
+            <div className="space-y-8">
+              <DeckStats />
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {decks.map(deck => (
+                  <DeckCard
+                    key={deck.id}
+                    deck={deck}
+                    onStudy={handleStartStudy}
+                  />
+                ))}
+              </div>
+              {decks.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground">
+                    Nenhum deck disponível no momento.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         )}
       </main>
-      
       <Footer />
     </div>
   );

@@ -7,6 +7,8 @@ interface CreateDeckData {
   title: string;
   description?: string;
   level: string;
+  category?: string;
+  difficulty?: string;
 }
 
 interface CreateCardData {
@@ -20,12 +22,60 @@ interface UpdateProgressData {
   score?: number;
 }
 
+interface DeckProgress {
+  totalCards: number;
+  completedCards: number;
+  correctAnswers: number;
+  streakDays: number;
+  lastStudyDate: string;
+  nextReviewDate: string | null;
+}
+
 export class FlashcardService {
   async getAllDecks() {
-    return await prisma.flashcardDeck.findMany({
+    const decks = await prisma.flashcardDeck.findMany({
       include: {
         cards: true,
-      },
+        progress: {
+          include: {
+            card: true
+          }
+        }
+      }
+    });
+
+    return decks.map(deck => {
+      // Calcular progresso baseado nos cards estudados
+      const totalCards = deck.cards.length;
+      const studiedCards = deck.progress.length;
+      const correctAnswers = deck.progress.filter(p => p.difficulty === 'easy').length;
+      const lastStudy = deck.progress.length > 0 
+        ? Math.max(...deck.progress.map(p => p.lastStudiedAt.getTime()))
+        : deck.createdAt.getTime();
+
+      return {
+        id: deck.id.toString(),
+        title: deck.title,
+        description: deck.description || '',
+        level: deck.level,
+        category: deck.category || 'vocabulary',
+        difficulty: deck.difficulty,
+        locked: deck.locked,
+        isFavorite: deck.isFavorite,
+        nextReview: deck.nextReviewDate?.toISOString() || null,
+        lastPracticed: new Date(lastStudy).toISOString(),
+        progress: {
+          totalCards,
+          completedCards: studiedCards,
+          correctAnswers,
+          streakDays: 0, // TODO: Implementar cálculo de streak
+          lastStudyDate: new Date(lastStudy).toISOString(),
+          nextReviewDate: deck.nextReviewDate?.toISOString() || null
+        },
+        achievements: deck.achievements,
+        tags: deck.tags,
+        estimatedTimeMinutes: deck.estimatedTimeMinutes
+      };
     });
   }
 
@@ -34,14 +84,55 @@ export class FlashcardService {
       where: { id },
       include: {
         cards: true,
-      },
+        progress: {
+          include: {
+            card: true
+          }
+        }
+      }
     });
 
     if (!deck) {
       throw new AppError('Deck not found', 404);
     }
 
-    return deck;
+    // Calcular progresso baseado nos cards estudados
+    const totalCards = deck.cards.length;
+    const studiedCards = deck.progress.length;
+    const correctAnswers = deck.progress.filter(p => p.difficulty === 'easy').length;
+    const lastStudy = deck.progress.length > 0 
+      ? Math.max(...deck.progress.map(p => p.lastStudiedAt.getTime()))
+      : deck.createdAt.getTime();
+
+    return {
+      id: deck.id.toString(),
+      title: deck.title,
+      description: deck.description || '',
+      level: deck.level,
+      category: deck.category || 'vocabulary',
+      difficulty: deck.difficulty,
+      locked: deck.locked,
+      isFavorite: deck.isFavorite,
+      nextReview: deck.nextReviewDate?.toISOString() || null,
+      lastPracticed: new Date(lastStudy).toISOString(),
+      progress: {
+        totalCards,
+        completedCards: studiedCards,
+        correctAnswers,
+        streakDays: 0, // TODO: Implementar cálculo de streak
+        lastStudyDate: new Date(lastStudy).toISOString(),
+        nextReviewDate: deck.nextReviewDate?.toISOString() || null
+      },
+      achievements: deck.achievements,
+      tags: deck.tags,
+      estimatedTimeMinutes: deck.estimatedTimeMinutes,
+      cards: deck.cards.map(card => ({
+        id: card.id.toString(),
+        front: card.front,
+        back: card.back,
+        example: card.example || null
+      }))
+    };
   }
 
   async createDeck(data: CreateDeckData) {
@@ -50,10 +141,12 @@ export class FlashcardService {
         title: data.title,
         description: data.description,
         level: data.level,
+        category: data.category,
+        difficulty: data.difficulty || 'medium'
       },
       include: {
-        cards: true,
-      },
+        cards: true
+      }
     });
   }
 
@@ -95,7 +188,7 @@ export class FlashcardService {
 
   async addCard(deckId: number, data: CreateCardData) {
     const deck = await prisma.flashcardDeck.findUnique({
-      where: { id: deckId },
+      where: { id: deckId }
     });
 
     if (!deck) {
@@ -107,8 +200,8 @@ export class FlashcardService {
         front: data.front,
         back: data.back,
         example: data.example,
-        deckId,
-      },
+        deckId
+      }
     });
   }
 
@@ -151,42 +244,58 @@ export class FlashcardService {
     });
   }
 
-  async updateProgress(deckId: number, userId: number, data: UpdateProgressData) {
-    const deck = await prisma.flashcardDeck.findUnique({
-      where: { id: deckId },
-    });
-
-    if (!deck) {
-      throw new AppError('Deck not found', 404);
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    return await prisma.flashcardProgress.upsert({
+  async updateProgress(userId: number, deckId: number, cardId: number, difficulty: string) {
+    const progress = await prisma.flashcardProgress.upsert({
       where: {
-        userId_deckId: {
+        userId_deckId_cardId: {
           userId,
           deckId,
-        },
+          cardId
+        }
       },
       update: {
-        status: data.status,
-        score: data.score,
-        completedAt: data.status === 'completed' ? new Date() : null,
+        difficulty,
+        lastStudiedAt: new Date(),
+        studyCount: {
+          increment: 1
+        }
       },
       create: {
         userId,
         deckId,
-        status: data.status,
-        score: data.score,
-        completedAt: data.status === 'completed' ? new Date() : null,
-      },
+        cardId,
+        difficulty
+      }
     });
+
+    // Atualizar nextReviewDate do deck baseado no progresso
+    const deck = await prisma.flashcardDeck.findUnique({
+      where: { id: deckId },
+      include: {
+        cards: true,
+        progress: true
+      }
+    });
+
+    if (deck) {
+      const totalCards = deck.cards.length;
+      const studiedCards = new Set(deck.progress.map(p => p.cardId)).size;
+      
+      if (studiedCards === totalCards) {
+        // Todos os cards foram estudados, definir próxima revisão
+        const nextReview = new Date();
+        nextReview.setDate(nextReview.getDate() + 1); // Próxima revisão em 24h
+        
+        await prisma.flashcardDeck.update({
+          where: { id: deckId },
+          data: {
+            nextReviewDate: nextReview,
+            lastStudyDate: new Date()
+          }
+        });
+      }
+    }
+
+    return progress;
   }
 } 
