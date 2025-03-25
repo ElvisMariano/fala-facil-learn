@@ -1,28 +1,33 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
-import { Plus, Trash2, Volume2 } from "lucide-react";
+import { Plus, X, Save } from "lucide-react";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 
-interface FlashcardItemProps {
-  id: string;
-  term: string;
-  definition: string;
-  example?: string;
-  audio?: string;
-  image?: string;
-}
+// Schema de validação
+const cardSchema = z.object({
+  front: z.string().min(1, "O frente do card é obrigatório"),
+  back: z.string().min(1, "O verso do card é obrigatório"),
+  example: z.string().optional(),
+});
+
+const flashcardSchema = z.object({
+  title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
+  description: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres"),
+  level: z.string().min(1, "O nível é obrigatório"),
+  category: z.string().min(1, "A categoria é obrigatória"),
+  cards: z.array(cardSchema).min(1, "Adicione pelo menos um card"),
+});
+
+type FlashcardFormData = z.infer<typeof flashcardSchema>;
 
 interface FlashcardFormProps {
-  initialData?: {
-    id?: string;
-    title: string;
-    description: string;
-    category: string;
-    level: string;
-    cards: FlashcardItemProps[];
-  };
-  onSubmit: (data: any) => void;
+  initialData?: any;
+  onSubmit: (data: FlashcardFormData) => void;
   onCancel: () => void;
 }
 
@@ -31,227 +36,294 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
   onSubmit, 
   onCancel 
 }) => {
-  const [formData, setFormData] = useState({
-    title: initialData?.title || "",
-    description: initialData?.description || "",
-    category: initialData?.category || "vocabulary",
-    level: initialData?.level || "beginner",
-    cards: initialData?.cards || [
-      { id: Math.random().toString(36).slice(2), term: "", definition: "", example: "", audio: "", image: "" }
-    ]
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Configuração do formulário com React Hook Form
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<FlashcardFormData>({
+    resolver: zodResolver(flashcardSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      level: "beginner",
+      category: "vocabulary",
+      cards: [{ front: "", back: "", example: "" }],
+    },
   });
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleCardChange = (index: number, field: string, value: string) => {
-    const updatedCards = [...formData.cards];
-    updatedCards[index] = { ...updatedCards[index], [field]: value };
-    setFormData(prev => ({
-      ...prev,
-      cards: updatedCards
-    }));
-  };
-
+  
+  // Field array para manipulação dinâmica dos cards
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "cards",
+  });
+  
+  // Efeito para preencher o formulário com dados iniciais se fornecidos
+  useEffect(() => {
+    if (initialData) {
+      console.log("Carregando dados iniciais no formulário:", initialData);
+      const formattedData = {
+        title: initialData.title || "",
+        description: initialData.description || "",
+        level: initialData.level || "beginner",
+        category: initialData.category || "vocabulary",
+        cards: initialData.cards?.length > 0 
+          ? initialData.cards.map((card: any) => ({
+              front: card.front || "",
+              back: card.back || "",
+              example: card.example || "",
+            }))
+          : [{ front: "", back: "", example: "" }],
+      };
+      
+      reset(formattedData);
+    }
+  }, [initialData, reset]);
+  
+  // Função para adicionar um novo card vazio
   const addCard = () => {
-    setFormData(prev => ({
-      ...prev,
-      cards: [
-        ...prev.cards,
-        { id: Math.random().toString(36).slice(2), term: "", definition: "", example: "", audio: "", image: "" }
-      ]
-    }));
+    append({ front: "", back: "", example: "" });
   };
-
-  const removeCard = (index: number) => {
-    if (formData.cards.length <= 1) return;
+  
+  // Handler do envio do formulário
+  const handleFormSubmit = (data: FlashcardFormData) => {
+    setIsSubmitting(true);
+    console.log("Dados do formulário a serem enviados:", data);
     
-    const updatedCards = [...formData.cards];
-    updatedCards.splice(index, 1);
-    setFormData(prev => ({
-      ...prev,
-      cards: updatedCards
-    }));
+    try {
+      // Se temos dados iniciais, estamos editando um deck existente
+      if (initialData && initialData.id) {
+        onSubmit({
+          ...data,
+          id: initialData.id,
+        });
+      } else {
+        onSubmit(data);
+      }
+    } catch (error) {
+      console.error("Erro ao processar formulário:", error);
+      toast.error("Ocorreu um erro ao processar o formulário. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      ...formData,
-      id: initialData?.id
-    });
-  };
-
+  
   return (
-    <Card className="border-0 shadow-sm">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Volume2 className="h-5 w-5 text-primary" />
-          {initialData ? "Editar Conjunto de Flashcards" : "Novo Conjunto de Flashcards"}
-        </CardTitle>
+        <CardTitle>{initialData ? "Editar" : "Criar"} Conjunto de Flashcards</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="title" className="text-sm font-medium">
-                Título
-              </label>
-              <input
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                className="w-full p-2 border rounded-md"
-                required
-              />
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+          {/* Informações básicas do deck */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Informações Básicas</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Título */}
+              <div className="space-y-2">
+                <label htmlFor="title" className="block text-sm font-medium">
+                  Título
+                </label>
+                <Controller
+                  name="title"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      type="text"
+                      className="w-full p-2 border rounded-md"
+                      placeholder="Ex: Vocabulário básico de viagem"
+                    />
+                  )}
+                />
+                {errors.title && (
+                  <p className="text-sm text-red-500">{errors.title.message}</p>
+                )}
+              </div>
+              
+              {/* Nível */}
+              <div className="space-y-2">
+                <label htmlFor="level" className="block text-sm font-medium">
+                  Nível
+                </label>
+                <Controller
+                  name="level"
+                  control={control}
+                  render={({ field }) => (
+                    <select {...field} className="w-full p-2 border rounded-md">
+                      <option value="beginner">Iniciante</option>
+                      <option value="intermediate">Intermediário</option>
+                      <option value="advanced">Avançado</option>
+                    </select>
+                  )}
+                />
+                {errors.level && (
+                  <p className="text-sm text-red-500">{errors.level.message}</p>
+                )}
+              </div>
             </div>
             
+            {/* Descrição */}
             <div className="space-y-2">
-              <label htmlFor="category" className="text-sm font-medium">
-                Categoria
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="vocabulary">Vocabulário</option>
-                <option value="phrases">Frases</option>
-                <option value="idioms">Expressões Idiomáticas</option>
-                <option value="grammar">Regras Gramaticais</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="level" className="text-sm font-medium">
-                Nível
-              </label>
-              <select
-                id="level"
-                name="level"
-                value={formData.level}
-                onChange={handleChange}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="beginner">Iniciante</option>
-                <option value="intermediate">Intermediário</option>
-                <option value="advanced">Avançado</option>
-              </select>
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="description" className="text-sm font-medium">
+              <label htmlFor="description" className="block text-sm font-medium">
                 Descrição
               </label>
-              <input
-                id="description"
+              <Controller
                 name="description"
-                value={formData.description}
-                onChange={handleChange}
-                className="w-full p-2 border rounded-md"
-                required
+                control={control}
+                render={({ field }) => (
+                  <textarea
+                    {...field}
+                    className="w-full p-2 border rounded-md"
+                    rows={3}
+                    placeholder="Descreva brevemente este conjunto de flashcards..."
+                  />
+                )}
               />
+              {errors.description && (
+                <p className="text-sm text-red-500">{errors.description.message}</p>
+              )}
+            </div>
+            
+            {/* Categoria */}
+            <div className="space-y-2">
+              <label htmlFor="category" className="block text-sm font-medium">
+                Categoria
+              </label>
+              <Controller
+                name="category"
+                control={control}
+                render={({ field }) => (
+                  <select {...field} className="w-full p-2 border rounded-md">
+                    <option value="vocabulary">Vocabulário</option>
+                    <option value="phrases">Frases</option>
+                    <option value="idioms">Expressões Idiomáticas</option>
+                    <option value="grammar">Regras Gramaticais</option>
+                  </select>
+                )}
+              />
+              {errors.category && (
+                <p className="text-sm text-red-500">{errors.category.message}</p>
+              )}
             </div>
           </div>
           
+          {/* Cards */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-md font-medium">Flashcards</h3>
+              <h3 className="text-lg font-medium">Cards</h3>
               <Button 
                 type="button" 
                 variant="outline" 
                 size="sm" 
                 onClick={addCard}
-                className="flex items-center gap-1"
               >
-                <Plus className="h-4 w-4" /> Adicionar Card
+                <Plus className="h-4 w-4 mr-1" />
+                Adicionar Card
               </Button>
             </div>
             
-            {formData.cards.map((card, index) => (
-              <div key={card.id} className="p-4 border rounded-md bg-muted/20">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">Card #{index + 1}</h4>
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => removeCard(index)}
-                    disabled={formData.cards.length <= 1}
-                    className="text-destructive hover:text-destructive/90"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Termo</label>
-                    <input
-                      value={card.term}
-                      onChange={(e) => handleCardChange(index, "term", e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Definição</label>
-                    <input
-                      value={card.definition}
-                      onChange={(e) => handleCardChange(index, "definition", e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="mt-2 space-y-2">
-                  <label className="text-sm font-medium">Exemplo</label>
-                  <textarea
-                    value={card.example}
-                    onChange={(e) => handleCardChange(index, "example", e.target.value)}
-                    rows={2}
-                    className="w-full p-2 border rounded-md"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">URL do Áudio</label>
-                    <input
-                      value={card.audio}
-                      onChange={(e) => handleCardChange(index, "audio", e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                      placeholder="URL para arquivo de áudio"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">URL da Imagem</label>
-                    <input
-                      value={card.image}
-                      onChange={(e) => handleCardChange(index, "image", e.target.value)}
-                      className="w-full p-2 border rounded-md"
-                      placeholder="URL para imagem"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+            {errors.cards && !Array.isArray(errors.cards) && (
+              <p className="text-sm text-red-500">{errors.cards.message}</p>
+            )}
+            
+            <div className="space-y-4">
+              {fields.map((field, index) => (
+                <Card key={field.id} className="border border-muted">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center mb-3">
+                      <h4 className="font-medium">Card #{index + 1}</h4>
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="text-muted-foreground hover:text-destructive"
+                        disabled={fields.length === 1}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Frente do card */}
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium">
+                          Frente (Term)
+                        </label>
+                        <Controller
+                          name={`cards.${index}.front`}
+                          control={control}
+                          render={({ field }) => (
+                            <input
+                              {...field}
+                              type="text"
+                              className="w-full p-2 border rounded-md"
+                              placeholder="Ex: Hello"
+                            />
+                          )}
+                        />
+                        {errors.cards?.[index]?.front && (
+                          <p className="text-sm text-red-500">
+                            {errors.cards[index]?.front?.message}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Verso do card */}
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium">
+                          Verso (Definição)
+                        </label>
+                        <Controller
+                          name={`cards.${index}.back`}
+                          control={control}
+                          render={({ field }) => (
+                            <input
+                              {...field}
+                              type="text"
+                              className="w-full p-2 border rounded-md"
+                              placeholder="Ex: Olá"
+                            />
+                          )}
+                        />
+                        {errors.cards?.[index]?.back && (
+                          <p className="text-sm text-red-500">
+                            {errors.cards[index]?.back?.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Exemplo (opcional) */}
+                    <div className="mt-3 space-y-2">
+                      <label className="block text-sm font-medium">
+                        Exemplo (opcional)
+                      </label>
+                      <Controller
+                        name={`cards.${index}.example`}
+                        control={control}
+                        render={({ field }) => (
+                          <input
+                            {...field}
+                            type="text"
+                            className="w-full p-2 border rounded-md"
+                            placeholder="Ex: Hello, how are you?"
+                          />
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {fields.length === 0 && (
+              <p className="text-center py-4 bg-muted/20 rounded-lg">
+                Adicione cards ao conjunto
+              </p>
+            )}
           </div>
           
-          <div className="flex justify-end space-x-2">
+          {/* Botões de ação */}
+          <div className="flex justify-end space-x-3">
             <Button 
               type="button" 
               variant="outline" 
@@ -259,8 +331,21 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="default">
-              {initialData ? "Atualizar" : "Criar"} Conjunto de Flashcards
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center">
+                  <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-white rounded-full" />
+                  Processando...
+                </span>
+              ) : (
+                <span className="flex items-center">
+                  <Save className="h-4 w-4 mr-2" />
+                  {initialData ? "Atualizar" : "Criar"} Flashcards
+                </span>
+              )}
             </Button>
           </div>
         </form>
