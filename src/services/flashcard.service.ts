@@ -1,4 +1,3 @@
-
 import api from '../lib/api';
 
 export const flashcardService = {
@@ -118,6 +117,19 @@ export const flashcardService = {
       return response.data;
     } catch (error) {
       console.error(`Erro ao atualizar progresso para deck ${deckId}, card ${cardId}:`, error);
+      throw error;
+    }
+  },
+
+  // Obter progresso de um deck específico
+  getDeckProgress: async (deckId: string) => {
+    console.log(`Buscando progresso do deck ${deckId}`);
+    try {
+      const response = await api.get(`/flashcards/${deckId}/progress`);
+      console.log('Resposta do progresso do deck:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Erro ao buscar progresso do deck ${deckId}:`, error);
       throw error;
     }
   },

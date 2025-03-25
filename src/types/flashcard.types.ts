@@ -20,6 +20,14 @@ export interface DeckProgress {
   nextReviewDate: string | null;
 }
 
+export interface Flashcard {
+  id: number;
+  front: string;
+  back: string;
+  example?: string;
+  deckId: number;
+}
+
 export interface FlashcardDeck {
   id: string;
   title: string;
@@ -35,4 +43,5 @@ export interface FlashcardDeck {
   achievements: string[];
   tags: string[];
   estimatedTimeMinutes: number;
+  cards: Flashcard[];
 } 
