@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
@@ -64,6 +63,7 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
         description: data.description,
         level: data.level,
         category: data.category,
+        published: data.published,
         cards: data.cards.map((card: any) => ({
           term: card.front,
           definition: card.back,
@@ -104,6 +104,7 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
         description: data.description,
         level: data.level,
         category: data.category,
+        published: data.published,
       };
       
       // Atualiza o deck através da API
@@ -330,6 +331,13 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
                   </span>
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                     {flashcard.cards?.length || 0} cards
+                  </span>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    flashcard.published 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {flashcard.published ? 'Publicado' : 'Rascunho'}
                   </span>
                 </div>
               </CardContent>

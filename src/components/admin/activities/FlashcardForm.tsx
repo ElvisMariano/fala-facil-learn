@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
@@ -20,6 +19,7 @@ const flashcardSchema = z.object({
   description: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres"),
   level: z.string().min(1, "O nível é obrigatório"),
   category: z.string().min(1, "A categoria é obrigatória"),
+  published: z.boolean().default(false),
   cards: z.array(cardSchema).min(1, "Adicione pelo menos um card"),
 });
 
@@ -48,6 +48,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
       description: "",
       level: "beginner",
       category: "vocabulary",
+      published: false,
       cards: [{ front: "", back: "", example: "" }],
     },
   });
@@ -68,6 +69,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
         description: initialData.description || "",
         level: initialData.level || "beginner",
         category: initialData.category || "vocabulary",
+        published: initialData.published || false,
         cards: initialData.cards?.length > 0 
           ? initialData.cards.map((card: any) => ({
               front: card.front || "",
@@ -207,6 +209,31 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
               {errors.category && (
                 <p className="text-sm text-red-500">{errors.category.message}</p>
               )}
+            </div>
+            
+            {/* Status de Publicação */}
+            <div className="space-y-2">
+              <label htmlFor="published" className="block text-sm font-medium">
+                Status de Publicação
+              </label>
+              <Controller
+                name="published"
+                control={control}
+                render={({ field }) => (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="published"
+                      checked={field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                    />
+                    <label htmlFor="published" className="text-sm text-muted-foreground">
+                      Publicar deck imediatamente
+                    </label>
+                  </div>
+                )}
+              />
             </div>
           </div>
           
