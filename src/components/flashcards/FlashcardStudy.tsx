@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/custom/Button';
 import { Card } from '@/components/ui/custom/Card';
@@ -22,7 +23,9 @@ export function FlashcardStudy({ deck, onBack }: FlashcardStudyProps) {
   useEffect(() => {
     const fetchCards = async () => {
       try {
+        console.log('Buscando cards para o deck:', deck.id);
         const response = await api.get(`/flashcards/${deck.id}/cards`);
+        console.log('Resposta da API cards:', response.data);
         setCards(response.data);
         setIsLoading(false);
       } catch (error) {
@@ -43,10 +46,12 @@ export function FlashcardStudy({ deck, onBack }: FlashcardStudyProps) {
     if (!cards[currentCardIndex]) return;
 
     try {
+      console.log('Atualizando progresso do card:', cards[currentCardIndex].id, 'com dificuldade:', difficulty);
       const response = await api.post(`/flashcards/${deck.id}/progress`, {
         cardId: cards[currentCardIndex].id,
         difficulty
       });
+      console.log('Resposta de atualização de progresso:', response.data);
 
       // Atualizar o progresso no store
       updateDeckProgress(deck.id, response.data);
@@ -132,4 +137,4 @@ export function FlashcardStudy({ deck, onBack }: FlashcardStudyProps) {
       </div>
     </div>
   );
-} 
+}

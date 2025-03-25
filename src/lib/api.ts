@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -19,6 +20,7 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
+  console.log('Request:', config.method?.toUpperCase(), config.url, config.data || '');
   return config;
 }, (error) => {
   console.error('Request error:', error);
@@ -27,13 +29,18 @@ api.interceptors.request.use((config) => {
 
 // Add response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('Response from:', response.config.url, 'Status:', response.status);
+    return response;
+  },
   (error) => {
     console.error('API error:', error);
     
     // Handle different error types
     if (error.response) {
       // The server responded with an error status
+      console.log('Error response:', error.response.status, error.response.data);
+      
       if (error.response.status === 401) {
         // Unauthorized - token invalid or expired
         console.log('401 Unauthorized error received');
