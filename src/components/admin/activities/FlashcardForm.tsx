@@ -9,8 +9,8 @@ import { toast } from "sonner";
 
 // Schema de validação
 const cardSchema = z.object({
-  front: z.string().min(1, "O frente do card é obrigatório"),
-  back: z.string().min(1, "O verso do card é obrigatório"),
+  term: z.string().min(1, "O termo é obrigatório"),
+  definition: z.string().min(1, "A definição é obrigatória"),
   example: z.string().optional(),
 });
 
@@ -46,7 +46,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
       description: "",
       level: "beginner",
       category: "vocabulary",
-      cards: [{ front: "", back: "", example: "" }],
+      cards: [{ term: "", definition: "", example: "" }],
     },
   });
   
@@ -67,11 +67,11 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
         category: initialData.category || "vocabulary",
         cards: initialData.cards?.length > 0 
           ? initialData.cards.map((card: any) => ({
-              front: card.front || "",
-              back: card.back || "",
+              term: card.term || card.front || "",
+              definition: card.definition || card.back || "",
               example: card.example || "",
             }))
-          : [{ front: "", back: "", example: "" }],
+          : [{ term: "", definition: "", example: "" }],
       };
       
       reset(formattedData);
@@ -80,7 +80,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
   
   // Função para adicionar um novo card vazio
   const addCard = () => {
-    append({ front: "", back: "", example: "" });
+    append({ term: "", definition: "", example: "" });
   };
   
   // Handler do envio do formulário
@@ -242,7 +242,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Frente do card */}
+                    {/* Termo do card */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium">
                         Termo (Frente)
@@ -259,17 +259,17 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
                           />
                         )}
                       />
-                      {errors.cards?.[index]?.front && (
+                      {errors.cards?.[index]?.term && (
                         <p className="text-sm text-red-500">
-                          {errors.cards[index]?.front?.message}
+                          {errors.cards[index]?.term?.message}
                         </p>
                       )}
                     </div>
                     
-                    {/* Verso do card */}
+                    {/* Definição do card */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium">
-                        Definição (Verso)
+                        Definição
                       </label>
                       <Controller
                         name={`cards.${index}.back`}
@@ -283,9 +283,9 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
                           />
                         )}
                       />
-                      {errors.cards?.[index]?.back && (
+                      {errors.cards?.[index]?.definition && (
                         <p className="text-sm text-red-500">
-                          {errors.cards[index]?.back?.message}
+                          {errors.cards[index]?.definition?.message}
                         </p>
                       )}
                     </div>

@@ -20,21 +20,23 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
   const [selectedFlashcard, setSelectedFlashcard] = useState<any>(null);
   const [levelFilter, setLevelFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const queryClient = useQueryClient();
   
   // Query para buscar flashcards
   const { 
-    data, 
+    data: { flashcards = [] } = {}, 
     isLoading, 
-    error 
+    error,
+    refetch
   } = useQuery({
     queryKey: ['admin-flashcards'],
     queryFn: async () => {
       try {
         const response = await flashcardService.getAllDecks();
         console.log("Flashcards obtidos:", response);
-        return response.data || [];
+        return response;
       } catch (error) {
         console.error("Erro ao buscar flashcards:", error);
         throw error;
@@ -92,7 +94,6 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
     }
   });
 
-  const flashcards = data?.decks || [];
   console.log("Flashcards renderizados:", flashcards);
 
   // Filtrar flashcards baseado na busca e filtros
@@ -103,20 +104,35 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
     (categoryFilter === "all" || flashcard.category === categoryFilter)
   );
 
-  const handleCreateFlashcard = (data: any) => {
-    // Formatar os dados para o formato esperado pelo backend
-    const formattedData = {
-      title: data.title,
-      description: data.description,
-      level: data.level,
-      category: data.category,
-      cards: data.cards.map((card: any) => ({
-        front: card.term,
-        back: card.definition,
-        example: card.example || "",
-      }))
-    };
-    createMutation.mutate(formattedData);
+  const handleCreateFlashcard = async (data: any) => {
+    try {
+      console.log('Iniciando criação do deck com dados:', data);
+      
+      // Envia o deck e os cards em uma única requisição
+      const response = await flashcardService.createDeck({
+        title: data.title,
+        description: data.description,
+        level: data.level,
+        category: data.category,
+        cards: data.cards.map((card: any) => ({
+          term: card.term,
+          definition: card.definition,
+          example: card.example || ''
+        }))
+      });
+
+      console.log('Deck e cards criados:', response);
+      toast.success('Deck de flashcards criado com sucesso!');
+      
+      // Atualiza a lista
+      refetch();
+      
+      // Fecha o modal
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao criar deck e cards:', error);
+      toast.error('Erro ao criar o deck de flashcards');
+    }
   };
 
   const handleUpdateFlashcard = (data: any) => {
@@ -135,8 +151,22 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
     flashcardService.getDeckById(flashcard.id)
       .then(response => {
         console.log("Detalhes do flashcard:", response);
-        setSelectedFlashcard(response.data.deck);
-        setView("edit");
+        if (response.deck) {
+          // Formata os dados para o formulário
+          const formattedData = {
+            ...response.deck,
+            cards: response.deck.cards.map((card: any) => ({
+              term: card.term || card.front,
+              definition: card.definition || card.back,
+              example: card.example || "",
+            }))
+          };
+          console.log("Dados formatados para edição:", formattedData);
+          setSelectedFlashcard(formattedData);
+          setView("edit");
+        } else {
+          toast.error("Deck não encontrado");
+        }
       })
       .catch(error => {
         console.error("Erro ao buscar detalhes do flashcard:", error);
@@ -248,69 +278,60 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
             <option value="vocabulary">Vocabulário</option>
             <option value="phrases">Frases</option>
             <option value="idioms">Expressões Idiomáticas</option>
-            <option value="grammar">Regras Gramaticais</option>
+            <option value="grammar">Gramática</option>
           </select>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredFlashcards.length > 0 ? (
-          filteredFlashcards.map((flashcard: any) => (
-            <Card key={flashcard.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">{flashcard.title}</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">{flashcard.description}</p>
+
+      {filteredFlashcards.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">
+            Nenhum conjunto de flashcards encontrado
+          </p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredFlashcards.map((flashcard: any) => (
+            <Card key={flashcard.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-lg font-bold">{flashcard.title}</CardTitle>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEditFlashcard(flashcard)}
+                  >
+                    <PencilLine className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteFlashcard(flashcard.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex space-x-2">
-                      {flashcard.category && (
-                        <span className="px-2 py-1 bg-muted rounded-full text-xs">
-                          {flashcard.category === "vocabulary" && "Vocabulário"}
-                          {flashcard.category === "phrases" && "Frases"}
-                          {flashcard.category === "idioms" && "Expressões"}
-                          {flashcard.category === "grammar" && "Gramática"}
-                        </span>
-                      )}
-                      <span className="px-2 py-1 bg-muted rounded-full text-xs">
-                        {flashcard.level === "beginner" && "Iniciante"}
-                        {flashcard.level === "intermediate" && "Intermediário"}
-                        {flashcard.level === "advanced" && "Avançado"}
-                      </span>
-                    </div>
-                    <span className="text-sm">{flashcard.cards?.length || 0} cards</span>
-                  </div>
-                  
-                  <div className="flex justify-end space-x-2">
-                    <Button 
-                      variant="subtle" 
-                      size="sm"
-                      onClick={() => handleEditFlashcard(flashcard)}
-                    >
-                      <PencilLine className="h-4 w-4 mr-1" />
-                      Editar
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-destructive"
-                      onClick={() => handleDeleteFlashcard(flashcard.id)}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Excluir
-                    </Button>
-                  </div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {flashcard.description}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                    {flashcard.level}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/10 text-secondary">
+                    {flashcard.category}
+                  </span>
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                    {flashcard.cards?.length || 0} cards
+                  </span>
                 </div>
               </CardContent>
             </Card>
-          ))
-        ) : (
-          <div className="col-span-3 text-center py-10 bg-muted/20 rounded-lg">
-            <p className="text-muted-foreground">Nenhum conjunto de flashcards encontrado</p>
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

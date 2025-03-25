@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { verifyToken } from '../src/utils/jwt';
 import { AuthToken } from '../src/types/auth';
@@ -7,15 +6,21 @@ export type AuthenticatedRequest = Request & {
   user: AuthToken;
 };
 
-export async function authMiddleware(request: Request) {
+export type AuthMiddlewareResult = {
+  success: boolean;
+  error?: string;
+  user?: AuthToken;
+};
+
+export async function authMiddleware(request: Request): Promise<AuthMiddlewareResult> {
   try {
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Token não fornecido' },
-        { status: 401 }
-      );
+      return {
+        success: false,
+        error: 'Token não fornecido'
+      };
     }
 
     const token = authHeader.split(' ')[1];
@@ -23,23 +28,22 @@ export async function authMiddleware(request: Request) {
     try {
       const decoded = verifyToken(token);
       
-      // Adiciona o usuário autenticado à requisição
-      const requestWithUser = request as AuthenticatedRequest;
-      requestWithUser.user = decoded;
-
-      return NextResponse.next();
+      return {
+        success: true,
+        user: decoded
+      };
     } catch (error) {
-      return NextResponse.json(
-        { error: 'Token inválido' },
-        { status: 401 }
-      );
+      return {
+        success: false,
+        error: 'Token inválido'
+      };
     }
   } catch (error) {
     console.error('Erro na autenticação:', error);
-    return NextResponse.json(
-      { error: 'Erro na autenticação' },
-      { status: 401 }
-    );
+    return {
+      success: false,
+      error: 'Erro na autenticação'
+    };
   }
 }
 
