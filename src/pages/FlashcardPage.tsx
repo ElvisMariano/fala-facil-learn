@@ -603,7 +603,16 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
 const FlashcardPage: React.FC = () => {
   const [studyMode, setStudyMode] = useState(false);
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
-  const { decks, setDecks, calculateLevelProgress, currentLevel, levelProgress } = useFlashcardStore();
+  const { 
+    decks, 
+    setDecks, 
+    calculateLevelProgress, 
+    currentLevel, 
+    levelProgress,
+    filteredDecks,
+    filters,
+    setFilters
+  } = useFlashcardStore();
 
   // Fetch decks from API
   const { data: decksData, isLoading } = useQuery({
@@ -647,6 +656,10 @@ const FlashcardPage: React.FC = () => {
     setSelectedDeckId(null);
   };
 
+  const handleSearch = (term: string) => {
+    setFilters({ searchTerm: term });
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
@@ -660,6 +673,9 @@ const FlashcardPage: React.FC = () => {
       </div>
     );
   }
+
+  // Obter decks filtrados
+  const availableDecks = filteredDecks();
 
   return (
     <div className="min-h-screen bg-background">
@@ -677,9 +693,30 @@ const FlashcardPage: React.FC = () => {
 
             {/* Main Content */}
             <div className="space-y-8">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-bold tracking-tight">Flashcards</h2>
+                  <p className="text-muted-foreground">
+                    {availableDecks.length} {availableDecks.length === 1 ? 'deck disponível' : 'decks disponíveis'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Buscar decks..."
+                      className="w-64 px-4 py-2 rounded-lg border bg-background"
+                      value={filters.searchTerm}
+                      onChange={(e) => handleSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+
               <DeckStats />
+              
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {decks.map(deck => (
+                {availableDecks.map(deck => (
                   <DeckCard
                     key={deck.id}
                     deck={deck}
@@ -687,10 +724,13 @@ const FlashcardPage: React.FC = () => {
                   />
                 ))}
               </div>
-              {decks.length === 0 && (
+              
+              {availableDecks.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">
-                    Nenhum deck disponível no momento.
+                    {filters.searchTerm || filters.levels.length > 0 || filters.categories.length > 0
+                      ? 'Nenhum deck encontrado com os filtros selecionados.'
+                      : 'Nenhum deck disponível no momento.'}
                   </p>
                 </div>
               )}

@@ -31,6 +31,58 @@ interface DeckProgress {
   nextReviewDate: string | null;
 }
 
+async function calculateStreak(userId: number): Promise<number> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      profile: true
+    }
+  });
+
+  if (!user?.lastStudyDate || !user.profile) {
+    return 0;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const lastStudy = new Date(user.lastStudyDate);
+  lastStudy.setHours(0, 0, 0, 0);
+
+  const diffTime = Math.abs(today.getTime() - lastStudy.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  let newStreakDays = user.profile.streakDays;
+
+  // Se o último estudo foi hoje, mantém o streak atual
+  if (diffDays === 0) {
+    return newStreakDays;
+  }
+
+  // Se o último estudo foi ontem, incrementa o streak
+  if (diffDays === 1) {
+    newStreakDays += 1;
+    // Atualiza o cache do streak no perfil
+    await prisma.profile.update({
+      where: { userId },
+      data: { streakDays: newStreakDays }
+    });
+    return newStreakDays;
+  }
+
+  // Se passou mais de um dia, streak é quebrado
+  if (diffDays > 1) {
+    // Reseta o streak no perfil
+    await prisma.profile.update({
+      where: { userId },
+      data: { streakDays: 0 }
+    });
+    return 0;
+  }
+
+  return newStreakDays;
+}
+
 export class FlashcardService {
   async getAllDecks() {
     const decks = await prisma.flashcardDeck.findMany({
@@ -44,14 +96,16 @@ export class FlashcardService {
       }
     });
 
-    return decks.map(deck => {
-      // Calcular progresso baseado nos cards estudados
+    const transformedDecks = await Promise.all(decks.map(async deck => {
       const totalCards = deck.cards.length;
       const studiedCards = deck.progress.length;
       const correctAnswers = deck.progress.filter(p => p.difficulty === 'easy').length;
       const lastStudy = deck.progress.length > 0 
         ? Math.max(...deck.progress.map(p => p.lastStudiedAt.getTime()))
         : deck.createdAt.getTime();
+
+      // Calcular streak para o usuário atual
+      const streakDays = await calculateStreak(deck.progress[0]?.userId || 0);
 
       return {
         id: deck.id.toString(),
@@ -68,7 +122,7 @@ export class FlashcardService {
           totalCards,
           completedCards: studiedCards,
           correctAnswers,
-          streakDays: 0, // TODO: Implementar cálculo de streak
+          streakDays,
           lastStudyDate: new Date(lastStudy).toISOString(),
           nextReviewDate: deck.nextReviewDate?.toISOString() || null
         },
@@ -76,7 +130,9 @@ export class FlashcardService {
         tags: deck.tags,
         estimatedTimeMinutes: deck.estimatedTimeMinutes
       };
-    });
+    }));
+
+    return transformedDecks;
   }
 
   async getDeckById(id: number) {
@@ -104,6 +160,9 @@ export class FlashcardService {
       ? Math.max(...deck.progress.map(p => p.lastStudiedAt.getTime()))
       : deck.createdAt.getTime();
 
+    // Calcular streak para o usuário atual
+    const streakDays = await calculateStreak(deck.progress[0]?.userId || 0);
+
     return {
       id: deck.id.toString(),
       title: deck.title,
@@ -119,7 +178,7 @@ export class FlashcardService {
         totalCards,
         completedCards: studiedCards,
         correctAnswers,
-        streakDays: 0, // TODO: Implementar cálculo de streak
+        streakDays,
         lastStudyDate: new Date(lastStudy).toISOString(),
         nextReviewDate: deck.nextReviewDate?.toISOString() || null
       },
@@ -245,6 +304,7 @@ export class FlashcardService {
   }
 
   async updateProgress(userId: number, deckId: number, cardId: number, difficulty: string) {
+    // Atualizar o progresso do card
     const progress = await prisma.flashcardProgress.upsert({
       where: {
         userId_deckId_cardId: {
@@ -265,6 +325,24 @@ export class FlashcardService {
         deckId,
         cardId,
         difficulty
+      }
+    });
+
+    const now = new Date();
+
+    // Atualizar lastStudyDate do usuário e lastActivity do perfil
+    await prisma.user.update({
+      where: { id: userId },
+      data: { 
+        lastStudyDate: now,
+        profile: {
+          update: {
+            lastActivity: now,
+            xp: {
+              increment: difficulty === 'easy' ? 10 : 5
+            }
+          }
+        }
       }
     });
 
@@ -290,12 +368,18 @@ export class FlashcardService {
           where: { id: deckId },
           data: {
             nextReviewDate: nextReview,
-            lastStudyDate: new Date()
+            lastStudyDate: now
           }
         });
       }
     }
 
-    return progress;
+    // Calcular e retornar o streak atualizado
+    const streakDays = await calculateStreak(userId);
+
+    return {
+      ...progress,
+      streakDays
+    };
   }
 } 

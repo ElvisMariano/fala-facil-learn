@@ -14,6 +14,7 @@ interface FlashcardStore {
   levelProgress: LevelProgress;
   setDecks: (decks: FlashcardDeck[]) => void;
   setFilters: (filters: Partial<DeckFilters>) => void;
+  filteredDecks: () => FlashcardDeck[];
   sortDecks: (option: DeckSortOption) => void;
   toggleFavorite: (deckId: string) => void;
   calculateLevelProgress: () => void;
@@ -61,63 +62,62 @@ export const useFlashcardStore = create<FlashcardStore>((set, get) => ({
     }));
   },
 
-  sortDecks: (option) => {
-    set((state) => ({
-      decks: [...state.decks].sort((a, b) => {
-        // Implementar lógica de ordenação
-        switch (option) {
+  filteredDecks: () => {
+    const { decks, filters } = get();
+    
+    return decks
+      .filter(deck => {
+        // Filtrar por nível
+        if (filters.levels.length > 0 && !filters.levels.includes(deck.level)) {
+          return false;
+        }
+
+        // Filtrar por categoria
+        if (filters.categories.length > 0 && !filters.categories.includes(deck.category)) {
+          return false;
+        }
+
+        // Filtrar por termo de busca
+        if (filters.searchTerm) {
+          const searchLower = filters.searchTerm.toLowerCase();
+          const matchesTitle = deck.title.toLowerCase().includes(searchLower);
+          const matchesDescription = deck.description.toLowerCase().includes(searchLower);
+          if (!matchesTitle && !matchesDescription) {
+            return false;
+          }
+        }
+
+        // Filtrar decks completos
+        if (!filters.showCompleted && deck.progress.completedCards === deck.progress.totalCards) {
+          return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        switch (filters.sortBy) {
           case 'progress':
-            return b.progress.completedCards - a.progress.completedCards;
-          case 'level':
-            return a.level.localeCompare(b.level);
+            return (b.progress.completedCards / b.progress.totalCards) - 
+                   (a.progress.completedCards / a.progress.totalCards);
+          case 'level': {
+            const levelOrder = { beginner: 0, intermediate: 1, advanced: 2 };
+            return levelOrder[a.level] - levelOrder[b.level];
+          }
           case 'date':
             return new Date(b.lastPracticed).getTime() - new Date(a.lastPracticed).getTime();
           default:
             return a.title.localeCompare(b.title);
         }
-      })
+      });
+  },
+
+  sortDecks: (option) => {
+    set((state) => ({
+      filters: { ...state.filters, sortBy: option }
     }));
   },
 
-  calculateLevelProgress: () => {
-    const { decks } = get();
-    const progress: LevelProgress = {
-      beginner: { completed: 0, total: 0, unlocked: true },
-      intermediate: { completed: 0, total: 0, unlocked: false },
-      advanced: { completed: 0, total: 0, unlocked: false }
-    };
-
-    // Calcular progresso para cada nível
-    decks.forEach((deck) => {
-      const level = deck.level;
-      progress[level].total++;
-      if (deck.progress.completedCards === deck.progress.totalCards) {
-        progress[level].completed++;
-      }
-    });
-
-    // Verificar desbloqueio de níveis
-    Object.entries(LEVEL_REQUIREMENTS).forEach(([level, requirements]) => {
-      const levelKey = level as DeckLevel;
-      if (requirements.previousLevel === null) {
-        progress[levelKey].unlocked = true;
-      } else {
-        const previousLevelProgress = progress[requirements.previousLevel];
-        const completionPercentage = previousLevelProgress.total > 0
-          ? (previousLevelProgress.completed / previousLevelProgress.total) * 100
-          : 0;
-        progress[levelKey].unlocked = completionPercentage >= requirements.requiredCompletion;
-      }
-    });
-
-    set({ levelProgress: progress });
-  },
-
-  isLevelUnlocked: (level: DeckLevel) => {
-    return get().levelProgress[level].unlocked;
-  },
-
-  toggleFavorite: (deckId: string) => {
+  toggleFavorite: (deckId) => {
     set((state) => ({
       decks: state.decks.map(deck => 
         deck.id === deckId 
@@ -125,5 +125,41 @@ export const useFlashcardStore = create<FlashcardStore>((set, get) => ({
           : deck
       )
     }));
+  },
+
+  calculateLevelProgress: () => {
+    const { decks } = get();
+    const newLevelProgress: LevelProgress = {
+      beginner: { completed: 0, total: 0, unlocked: true },
+      intermediate: { completed: 0, total: 0, unlocked: false },
+      advanced: { completed: 0, total: 0, unlocked: false }
+    };
+
+    // Calcular progresso para cada nível
+    decks.forEach(deck => {
+      const levelStats = newLevelProgress[deck.level];
+      if (levelStats) {
+        levelStats.total++;
+        if (deck.progress.completedCards === deck.progress.totalCards) {
+          levelStats.completed++;
+        }
+      }
+    });
+
+    // Verificar desbloqueio de níveis
+    Object.entries(LEVEL_REQUIREMENTS).forEach(([level, requirements]) => {
+      if (requirements.previousLevel) {
+        const previousLevelStats = newLevelProgress[requirements.previousLevel];
+        const completionPercentage = (previousLevelStats.completed / previousLevelStats.total) * 100;
+        newLevelProgress[level as DeckLevel].unlocked = completionPercentage >= requirements.requiredCompletion;
+      }
+    });
+
+    set({ levelProgress: newLevelProgress });
+  },
+
+  isLevelUnlocked: (level) => {
+    const { levelProgress } = get();
+    return levelProgress[level].unlocked;
   }
 })); 

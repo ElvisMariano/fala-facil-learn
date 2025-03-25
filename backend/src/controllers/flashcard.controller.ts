@@ -117,10 +117,32 @@ export class FlashcardController {
 
   updateProgress = async (req: Request, res: Response) => {
     try {
-      const { id } = req.params;
-      const { userId, status, score } = req.body;
-      const progress = await this.flashcardService.updateProgress(Number(id), Number(userId), { status, score });
-      return res.json({ status: 'success', data: { progress } });
+      const { id: deckId } = req.params;
+      const { cardId, difficulty } = req.body;
+      const userId = req.user?.id; // Assumindo que o ID do usuário está disponível através do middleware de autenticação
+
+      if (!userId) {
+        return res.status(401).json({ status: 'error', message: 'User not authenticated' });
+      }
+
+      const progress = await this.flashcardService.updateProgress(
+        Number(userId),
+        Number(deckId),
+        Number(cardId),
+        difficulty
+      );
+
+      return res.json({
+        status: 'success',
+        data: {
+          progress: {
+            ...progress,
+            userId: progress.userId.toString(),
+            deckId: progress.deckId.toString(),
+            cardId: progress.cardId.toString()
+          }
+        }
+      });
     } catch (error) {
       if (error instanceof AppError) {
         return res.status(error.statusCode).json({ status: 'error', message: error.message });

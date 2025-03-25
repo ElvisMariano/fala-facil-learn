@@ -3,6 +3,8 @@ import { DeckFilters as DeckFiltersType, DeckLevel, DeckCategory, DeckSortOption
 import { useFlashcardStore } from '@/store/flashcardStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -99,6 +101,16 @@ export const DeckFilters: React.FC = () => {
             <SelectItem value="level">Nível</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Mostrar Decks Completos */}
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="show-completed"
+          checked={filters.showCompleted}
+          onCheckedChange={(checked) => setFilters({ showCompleted: checked })}
+        />
+        <Label htmlFor="show-completed">Mostrar decks completos</Label>
       </div>
     </div>
   );
