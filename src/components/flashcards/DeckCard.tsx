@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LevelBadge } from '../ui/level-badge';
@@ -6,6 +6,7 @@ import { StatsRow } from '../ui/stats-row';
 import { Clock, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FlashcardDeck, DeckDifficulty } from '@/types/flashcard.types';
+import { useFlashcardStore } from '@/store/flashcardStore';
 
 interface DeckCardProps {
   deck: FlashcardDeck;
@@ -53,7 +54,22 @@ const getDeckStatusMessage = (deck: FlashcardDeck) => {
 };
 
 export const DeckCard: React.FC<DeckCardProps> = ({ deck, onStudy }) => {
+  const { deckProgress, loadDeckProgress } = useFlashcardStore();
   const isAvailable = !deck.locked && (!deck.nextReview || new Date(deck.nextReview) <= new Date());
+  
+  useEffect(() => {
+    loadDeckProgress(deck.id.toString());
+  }, [deck.id, loadDeckProgress]);
+
+  const progress = deckProgress[deck.id.toString()] || [];
+  const completedCards = progress.length;
+  const correctAnswers = progress.filter(p => p.difficulty === 'easy').length;
+  const streakDays = progress.reduce((acc, curr) => {
+    const lastStudied = new Date(curr.lastStudiedAt);
+    const today = new Date();
+    const diffDays = Math.floor((today.getTime() - lastStudied.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays === 0 ? acc + 1 : acc;
+  }, 0);
   
   return (
     <Card className={cn(
@@ -68,7 +84,7 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck, onStudy }) => {
             "absolute h-full transition-all",
             getDifficultyColor(deck.difficulty)
           )}
-          style={{ width: `${(deck.progress.completedCards / deck.progress.totalCards) * 100}%` }}
+          style={{ width: `${(completedCards / deck.cards.length) * 100}%` }}
         />
       </div>
 
@@ -86,10 +102,10 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck, onStudy }) => {
         {/* Stats */}
         <div className="space-y-4">
           <StatsRow 
-            cards={deck.progress.totalCards}
-            completed={deck.progress.completedCards}
-            accuracy={deck.progress.correctAnswers / deck.progress.completedCards}
-            streak={deck.progress.streakDays}
+            cards={deck.cards.length}
+            completed={completedCards}
+            accuracy={correctAnswers / completedCards}
+            streak={streakDays}
           />
           
           {/* Estimated Time */}
@@ -103,7 +119,7 @@ export const DeckCard: React.FC<DeckCardProps> = ({ deck, onStudy }) => {
         <div className="flex gap-2 mt-4">
           <Button
             className="flex-1"
-            onClick={() => onStudy(deck.id)}
+            onClick={() => onStudy(deck.id.toString())}
             disabled={!isAvailable}
           >
             {getButtonLabel(deck)}

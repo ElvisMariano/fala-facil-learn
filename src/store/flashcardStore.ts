@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import api from '@/lib/api';
 import { DeckFilters, FlashcardDeck, DeckLevel, DeckSortOption } from '../types/flashcard.types';
+import { flashcardService } from '../services/flashcard.service';
 
 type LevelProgress = Record<DeckLevel, {
   completed: number;
@@ -8,11 +9,21 @@ type LevelProgress = Record<DeckLevel, {
   unlocked: boolean;
 }>;
 
+<<<<<<< HEAD
 interface FlashcardFilters {
   search: string;
   levels: string[];
   categories: string[];
   showCompleted: boolean;
+=======
+interface FlashcardProgress {
+  userId: string;
+  deckId: number;
+  cardId: number;
+  difficulty: string;
+  lastStudiedAt: Date;
+  studyCount: number;
+>>>>>>> temp
 }
 
 interface FlashcardStore {
@@ -21,6 +32,7 @@ interface FlashcardStore {
   filters: FlashcardFilters;
   currentLevel: DeckLevel;
   levelProgress: LevelProgress;
+  deckProgress: Record<string, FlashcardProgress[]>;
   setDecks: (decks: FlashcardDeck[]) => void;
   setFilters: (filters: Partial<FlashcardFilters>) => void;
   fetchDecks: () => Promise<void>;
@@ -29,6 +41,8 @@ interface FlashcardStore {
   toggleFavorite: (deckId: string) => void;
   calculateLevelProgress: () => void;
   isLevelUnlocked: (level: DeckLevel) => boolean;
+  updateProgress: (deckId: string, cardId: string, difficulty: string) => Promise<void>;
+  loadDeckProgress: (deckId: string) => Promise<void>;
 }
 
 const LEVEL_REQUIREMENTS = {
@@ -62,7 +76,18 @@ export const useFlashcardStore = create<FlashcardStore>((set, get) => ({
     intermediate: { completed: 0, total: 0, unlocked: false },
     advanced: { completed: 0, total: 0, unlocked: false }
   },
+<<<<<<< HEAD
   filters: defaultFilters,
+=======
+  deckProgress: {},
+  filters: {
+    levels: [],
+    categories: [],
+    searchTerm: '',
+    sortBy: 'name',
+    showCompleted: true
+  },
+>>>>>>> temp
 
   setDecks: (newDecks) => {
     set({ decks: newDecks });
@@ -184,6 +209,42 @@ export const useFlashcardStore = create<FlashcardStore>((set, get) => ({
   isLevelUnlocked: (level) => {
     const { levelProgress } = get();
     return levelProgress[level].unlocked;
+  },
+
+  updateProgress: async (deckId: string, cardId: string, difficulty: string) => {
+    try {
+      const response = await flashcardService.updateProgress(deckId, cardId, difficulty);
+      set((state) => ({
+        deckProgress: {
+          ...state.deckProgress,
+          [deckId]: state.deckProgress[deckId]?.map(progress => 
+            progress.cardId === parseInt(cardId)
+              ? { ...progress, ...response.progress }
+              : progress
+          ) || [response.progress]
+        }
+      }));
+      // Recalcula o progresso geral após atualizar
+      get().calculateLevelProgress();
+    } catch (error) {
+      console.error('Erro ao atualizar progresso:', error);
+      throw error;
+    }
+  },
+
+  loadDeckProgress: async (deckId: string) => {
+    try {
+      const response = await flashcardService.getDeckProgress(deckId);
+      set((state) => ({
+        deckProgress: {
+          ...state.deckProgress,
+          [deckId]: response.progress
+        }
+      }));
+    } catch (error) {
+      console.error('Erro ao carregar progresso do deck:', error);
+      throw error;
+    }
   }
 }));
 

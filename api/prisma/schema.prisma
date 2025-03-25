@@ -199,7 +199,10 @@ model FlashcardProgress {
   deck          FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
   card          Flashcard     @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, deckId, cardId])
+  @@unique([userId, deckId, cardId], name: "userId_deckId_cardId")
+  @@index([userId])
+  @@index([deckId])
+  @@index([cardId])
   @@map("flashcard_progress")
 }
 
