@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/custom/Button";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { Volume2, RefreshCw, CheckCircle, X, ChevronLeft, ChevronRight, Search, BarChart3, VolumeX, AlertCircle } from "lucide-react";
+import { Volume2, RefreshCw, CheckCircle, X, ChevronLeft, ChevronRight, Search, BarChart3, VolumeX, AlertCircle, CalendarDays } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { playAudio } from "@/utils/audioUtils";
@@ -16,6 +16,10 @@ import { DeckStats } from '@/components/flashcards/DeckStats';
 import { LevelProgress } from '@/components/flashcards/LevelProgress';
 import { useFlashcardStore } from '@/store/flashcardStore';
 import { FlashcardDeck } from '@/types/flashcard.types';
+import { Input } from "@/components/ui/custom/Input";
+import { Badge } from "@/components/ui/custom/Badge";
+import { Progress } from "@/components/ui/custom/Progress";
+import { CardFooter } from "@/components/ui/custom/CardFooter";
 
 // Types for our flashcard data
 interface FlashcardDeck {
@@ -600,147 +604,116 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
   );
 };
 
-const FlashcardPage: React.FC = () => {
+export function FlashcardPage() {
+  const { decks, filteredDecks, filters, setFilters, fetchDecks } = useFlashcardStore();
   const [studyMode, setStudyMode] = useState(false);
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
-  const { 
-    decks, 
-    setDecks, 
-    calculateLevelProgress, 
-    currentLevel, 
-    levelProgress,
-    filteredDecks,
-    filters,
-    setFilters
-  } = useFlashcardStore();
-
-  // Fetch decks from API
-  const { data: decksData, isLoading } = useQuery({
-    queryKey: ['flashcardDecks'],
-    queryFn: async () => {
-      const response = await api.get('/flashcards');
-      // Transform API response to match FlashcardDeck interface
-      const transformedDecks = response.data.flashcards.map((deck: any) => ({
-        ...deck,
-        progress: {
-          totalCards: deck.cardCount || 0,
-          completedCards: deck.progress || 0,
-          correctAnswers: deck.correctAnswers || 0,
-          streakDays: deck.streakDays || 0,
-          lastStudyDate: deck.lastPracticed || new Date().toISOString(),
-          nextReviewDate: deck.nextReview || null
-        }
-      }));
-      return { ...response.data, flashcards: transformedDecks };
-    },
-  });
-
-  // Update store when decks are loaded
-  useEffect(() => {
-    if (decksData?.flashcards) {
-      setDecks(decksData.flashcards);
-    }
-  }, [decksData, setDecks]);
 
   useEffect(() => {
-    calculateLevelProgress();
-  }, [decks, calculateLevelProgress]);
+    fetchDecks();
+  }, [fetchDecks]);
 
-  const handleStartStudy = (deckId: string) => {
+  const handleSearch = (value: string) => {
+    setFilters({ ...filters, search: value });
+  };
+
+  const handleDeckClick = (deckId: string) => {
     setSelectedDeckId(deckId);
     setStudyMode(true);
   };
 
-  const handleBackToDeck = () => {
+  const handleBackToDecks = () => {
     setStudyMode(false);
     setSelectedDeckId(null);
+    // Recarregar os decks para atualizar o progresso
+    fetchDecks();
   };
 
-  const handleSearch = (term: string) => {
-    setFilters({ searchTerm: term });
-  };
+  const selectedDeck = decks.find(deck => deck.id === selectedDeckId);
 
-  if (isLoading) {
+  if (studyMode && selectedDeck) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          </div>
-        </main>
-        <Footer />
-      </div>
+      <FlashcardStudy 
+        deck={selectedDeck} 
+        onBack={handleBackToDecks}
+      />
     );
   }
 
-  // Obter decks filtrados
-  const availableDecks = filteredDecks();
-
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-8">
-        {studyMode && selectedDeckId ? (
-          <FlashcardStudy onBackToDeck={handleBackToDeck} deckId={selectedDeckId} />
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-8">
-            {/* Sidebar */}
-            <div className="space-y-6">
-              <DeckFilters />
-              <LevelProgress currentLevel={currentLevel} levelProgress={levelProgress} />
-            </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Flashcards</h1>
+          <div className="flex items-center gap-4">
+            <Input
+              type="search"
+              placeholder="Buscar decks..."
+              value={filters.search}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-64"
+            />
+            <DeckFilters />
+          </div>
+        </div>
 
-            {/* Main Content */}
-            <div className="space-y-8">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-bold tracking-tight">Flashcards</h2>
-                  <p className="text-muted-foreground">
-                    {availableDecks.length} {availableDecks.length === 1 ? 'deck disponível' : 'decks disponíveis'}
-                  </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredDecks.map((deck) => (
+            <Card key={deck.id} className="flex flex-col">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>{deck.title}</CardTitle>
+                    <CardDescription>{deck.description}</CardDescription>
+                  </div>
+                  <Badge variant={deck.level === 'beginner' ? 'default' : deck.level === 'intermediate' ? 'secondary' : 'destructive'}>
+                    {deck.level}
+                  </Badge>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="Buscar decks..."
-                      className="w-64 px-4 py-2 rounded-lg border bg-background"
-                      value={filters.searchTerm}
-                      onChange={(e) => handleSearch(e.target.value)}
-                    />
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Progresso:</span>
+                    <span>{deck.progress.completedCards}/{deck.progress.totalCards} cards</span>
+                  </div>
+                  <Progress 
+                    value={deck.progress.totalCards > 0 ? (deck.progress.completedCards / deck.progress.totalCards) * 100 : 0} 
+                    className="h-2"
+                  />
+                  <div className="grid grid-cols-2 gap-4 mt-2">
+                    <div className="flex flex-col">
+                      <span className="text-sm text-muted-foreground">Acertos</span>
+                      <span className="font-medium">
+                        {deck.progress.correctAnswers > 0 && deck.progress.completedCards > 0
+                          ? `${Math.round((deck.progress.correctAnswers / deck.progress.completedCards) * 100)}%`
+                          : '0%'}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm text-muted-foreground">Tempo estimado</span>
+                      <span className="font-medium">{deck.estimatedTimeMinutes}min</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              <DeckStats />
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {availableDecks.map(deck => (
-                  <DeckCard
-                    key={deck.id}
-                    deck={deck}
-                    onStudy={handleStartStudy}
-                  />
-                ))}
-              </div>
-              
-              {availableDecks.length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    {filters.searchTerm || filters.levels.length > 0 || filters.categories.length > 0
-                      ? 'Nenhum deck encontrado com os filtros selecionados.'
-                      : 'Nenhum deck disponível no momento.'}
-                  </p>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4" />
+                  <span className="text-sm text-muted-foreground">
+                    {deck.progress.streakDays} dias seguidos
+                  </span>
                 </div>
-              )}
-            </div>
-          </div>
-        )}
-      </main>
-      <Footer />
+                <Button onClick={() => handleDeckClick(deck.id)}>
+                  Estudar
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
-};
+}
 
 export default FlashcardPage;

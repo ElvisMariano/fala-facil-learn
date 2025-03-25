@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import api from '@/lib/api';
 import { DeckFilters, FlashcardDeck, DeckLevel, DeckSortOption } from '../types/flashcard.types';
 
 type LevelProgress = Record<DeckLevel, {
@@ -7,14 +8,23 @@ type LevelProgress = Record<DeckLevel, {
   unlocked: boolean;
 }>;
 
+interface FlashcardFilters {
+  search: string;
+  levels: string[];
+  categories: string[];
+  showCompleted: boolean;
+}
+
 interface FlashcardStore {
   decks: FlashcardDeck[];
-  filters: DeckFilters;
+  filteredDecks: FlashcardDeck[];
+  filters: FlashcardFilters;
   currentLevel: DeckLevel;
   levelProgress: LevelProgress;
   setDecks: (decks: FlashcardDeck[]) => void;
-  setFilters: (filters: Partial<DeckFilters>) => void;
-  filteredDecks: () => FlashcardDeck[];
+  setFilters: (filters: Partial<FlashcardFilters>) => void;
+  fetchDecks: () => Promise<void>;
+  updateDeckProgress: (deckId: string, progress: any) => void;
   sortDecks: (option: DeckSortOption) => void;
   toggleFavorite: (deckId: string) => void;
   calculateLevelProgress: () => void;
@@ -36,79 +46,92 @@ const LEVEL_REQUIREMENTS = {
   }
 };
 
+const defaultFilters: FlashcardFilters = {
+  search: '',
+  levels: [],
+  categories: [],
+  showCompleted: true
+};
+
 export const useFlashcardStore = create<FlashcardStore>((set, get) => ({
   decks: [],
+  filteredDecks: [],
   currentLevel: 'beginner',
   levelProgress: {
     beginner: { completed: 0, total: 0, unlocked: true },
     intermediate: { completed: 0, total: 0, unlocked: false },
     advanced: { completed: 0, total: 0, unlocked: false }
   },
-  filters: {
-    levels: [],
-    categories: [],
-    searchTerm: '',
-    sortBy: 'name',
-    showCompleted: true
-  },
+  filters: defaultFilters,
 
   setDecks: (newDecks) => {
     set({ decks: newDecks });
   },
 
   setFilters: (newFilters) => {
-    set((state) => ({
-      filters: { ...state.filters, ...newFilters }
-    }));
+    set((state) => {
+      const updatedFilters = { ...state.filters, ...newFilters };
+      const filtered = filterDecks(state.decks, updatedFilters);
+      return { filters: updatedFilters, filteredDecks: filtered };
+    });
   },
 
-  filteredDecks: () => {
-    const { decks, filters } = get();
-    
-    return decks
-      .filter(deck => {
-        // Filtrar por nível
-        if (filters.levels.length > 0 && !filters.levels.includes(deck.level)) {
-          return false;
-        }
+  fetchDecks: async () => {
+    try {
+      const response = await api.get('/flashcards');
+      const transformedDecks = response.data.map((deck: any) => ({
+        id: deck.id.toString(),
+        title: deck.title,
+        description: deck.description || '',
+        level: deck.level,
+        category: deck.category || 'vocabulary',
+        difficulty: deck.difficulty,
+        locked: deck.locked,
+        isFavorite: deck.isFavorite,
+        nextReview: deck.nextReviewDate,
+        lastPracticed: deck.lastStudyDate,
+        progress: {
+          totalCards: deck.progress.totalCards || 0,
+          completedCards: deck.progress.completedCards || 0,
+          correctAnswers: deck.progress.correctAnswers || 0,
+          streakDays: deck.progress.streakDays || 0,
+          lastStudyDate: deck.progress.lastStudyDate || null,
+          nextReviewDate: deck.progress.nextReviewDate || null
+        },
+        achievements: deck.achievements || [],
+        tags: deck.tags || [],
+        estimatedTimeMinutes: deck.estimatedTimeMinutes || 5
+      }));
 
-        // Filtrar por categoria
-        if (filters.categories.length > 0 && !filters.categories.includes(deck.category)) {
-          return false;
-        }
+      const filtered = filterDecks(transformedDecks, get().filters);
+      set({ decks: transformedDecks, filteredDecks: filtered });
+    } catch (error) {
+      console.error('Erro ao buscar decks:', error);
+    }
+  },
 
-        // Filtrar por termo de busca
-        if (filters.searchTerm) {
-          const searchLower = filters.searchTerm.toLowerCase();
-          const matchesTitle = deck.title.toLowerCase().includes(searchLower);
-          const matchesDescription = deck.description.toLowerCase().includes(searchLower);
-          if (!matchesTitle && !matchesDescription) {
-            return false;
-          }
+  updateDeckProgress: (deckId, progress) => {
+    set((state) => {
+      const updatedDecks = state.decks.map(deck => {
+        if (deck.id === deckId) {
+          return {
+            ...deck,
+            progress: {
+              ...deck.progress,
+              completedCards: progress.completedCards,
+              correctAnswers: progress.correctAnswers,
+              streakDays: progress.streakDays,
+              lastStudyDate: new Date().toISOString(),
+              nextReviewDate: progress.nextReviewDate
+            }
+          };
         }
-
-        // Filtrar decks completos
-        if (!filters.showCompleted && deck.progress.completedCards === deck.progress.totalCards) {
-          return false;
-        }
-
-        return true;
-      })
-      .sort((a, b) => {
-        switch (filters.sortBy) {
-          case 'progress':
-            return (b.progress.completedCards / b.progress.totalCards) - 
-                   (a.progress.completedCards / a.progress.totalCards);
-          case 'level': {
-            const levelOrder = { beginner: 0, intermediate: 1, advanced: 2 };
-            return levelOrder[a.level] - levelOrder[b.level];
-          }
-          case 'date':
-            return new Date(b.lastPracticed).getTime() - new Date(a.lastPracticed).getTime();
-          default:
-            return a.title.localeCompare(b.title);
-        }
+        return deck;
       });
+
+      const filtered = filterDecks(updatedDecks, state.filters);
+      return { decks: updatedDecks, filteredDecks: filtered };
+    });
   },
 
   sortDecks: (option) => {
@@ -162,4 +185,30 @@ export const useFlashcardStore = create<FlashcardStore>((set, get) => ({
     const { levelProgress } = get();
     return levelProgress[level].unlocked;
   }
-})); 
+}));
+
+function filterDecks(decks: FlashcardDeck[], filters: FlashcardFilters): FlashcardDeck[] {
+  return decks.filter(deck => {
+    // Filtrar por busca
+    if (filters.search && !deck.title.toLowerCase().includes(filters.search.toLowerCase())) {
+      return false;
+    }
+
+    // Filtrar por nível
+    if (filters.levels.length > 0 && !filters.levels.includes(deck.level)) {
+      return false;
+    }
+
+    // Filtrar por categoria
+    if (filters.categories.length > 0 && !filters.categories.includes(deck.category)) {
+      return false;
+    }
+
+    // Filtrar decks completos
+    if (!filters.showCompleted && deck.progress.completedCards === deck.progress.totalCards) {
+      return false;
+    }
+
+    return true;
+  });
+} 

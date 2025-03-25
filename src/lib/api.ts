@@ -1,9 +1,8 @@
-
 import axios from 'axios';
 import { toast } from 'sonner';
 
 // Get API URL from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -14,11 +13,12 @@ const api = axios.create({
 
 // Add request interceptor
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('@fala-facil:token');
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log('Adding Authorization header:', `Bearer ${token}`);
   }
+  
   return config;
 }, (error) => {
   console.error('Request error:', error);
@@ -37,7 +37,7 @@ api.interceptors.response.use(
       if (error.response.status === 401) {
         // Unauthorized - token invalid or expired
         console.log('401 Unauthorized error received');
-        localStorage.removeItem('token');
+        localStorage.removeItem('@fala-facil:token');
         localStorage.removeItem('user');
         
         // Only redirect to login if we're not already on the login page

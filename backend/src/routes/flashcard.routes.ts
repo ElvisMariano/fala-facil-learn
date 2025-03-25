@@ -1,23 +1,25 @@
 import { Router } from 'express';
 import { FlashcardController } from '../controllers/flashcard.controller';
-import { authMiddleware, adminMiddleware } from '../middlewares/auth';
+import { adminMiddleware } from '../middlewares/admin.middleware';
+import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
 const flashcardController = new FlashcardController();
 
+// Rotas públicas
 router.get('/', flashcardController.getAllDecks);
 router.get('/:id', flashcardController.getDeckById);
+router.get('/:id/cards', flashcardController.getCards);
 
-router.use(authMiddleware);
+// Rotas que requerem autenticação
+router.post('/:id/progress', authMiddleware, flashcardController.updateProgress);
 
+// Rotas que requerem admin
 router.post('/', adminMiddleware, flashcardController.createDeck);
 router.put('/:id', adminMiddleware, flashcardController.updateDeck);
 router.delete('/:id', adminMiddleware, flashcardController.deleteDeck);
-
-router.post('/:id/cards', adminMiddleware, flashcardController.addCard);
+router.post('/:id/cards', adminMiddleware, flashcardController.createCard);
 router.put('/:id/cards/:cardId', adminMiddleware, flashcardController.updateCard);
 router.delete('/:id/cards/:cardId', adminMiddleware, flashcardController.deleteCard);
 
-router.post('/:id/progress', flashcardController.updateProgress);
-
-export { router as flashcardRoutes }; 
+export default router; 

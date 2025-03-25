@@ -39,7 +39,7 @@ async function calculateStreak(userId: number): Promise<number> {
     }
   });
 
-  if (!user?.lastStudyDate || !user.profile) {
+  if (!user?.lastStudyDate) {
     return 0;
   }
 
@@ -52,35 +52,27 @@ async function calculateStreak(userId: number): Promise<number> {
   const diffTime = Math.abs(today.getTime() - lastStudy.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  let newStreakDays = user.profile.streakDays;
-
   // Se o último estudo foi hoje, mantém o streak atual
   if (diffDays === 0) {
-    return newStreakDays;
+    return user.profile?.streakDays || 1;
   }
 
   // Se o último estudo foi ontem, incrementa o streak
   if (diffDays === 1) {
-    newStreakDays += 1;
-    // Atualiza o cache do streak no perfil
+    const newStreak = (user.profile?.streakDays || 0) + 1;
     await prisma.profile.update({
       where: { userId },
-      data: { streakDays: newStreakDays }
+      data: { streakDays: newStreak }
     });
-    return newStreakDays;
+    return newStreak;
   }
 
   // Se passou mais de um dia, streak é quebrado
-  if (diffDays > 1) {
-    // Reseta o streak no perfil
-    await prisma.profile.update({
-      where: { userId },
-      data: { streakDays: 0 }
-    });
-    return 0;
-  }
-
-  return newStreakDays;
+  await prisma.profile.update({
+    where: { userId },
+    data: { streakDays: 0 }
+  });
+  return 0;
 }
 
 export class FlashcardService {
@@ -304,6 +296,8 @@ export class FlashcardService {
   }
 
   async updateProgress(userId: number, deckId: number, cardId: number, difficulty: string) {
+    console.log('Iniciando atualização de progresso:', { userId, deckId, cardId, difficulty });
+
     // Atualizar o progresso do card
     const progress = await prisma.flashcardProgress.upsert({
       where: {
@@ -324,9 +318,12 @@ export class FlashcardService {
         userId,
         deckId,
         cardId,
-        difficulty
+        difficulty,
+        lastStudiedAt: new Date()
       }
     });
+
+    console.log('Progresso do card atualizado:', progress);
 
     const now = new Date();
 
@@ -336,10 +333,17 @@ export class FlashcardService {
       data: { 
         lastStudyDate: now,
         profile: {
-          update: {
-            lastActivity: now,
-            xp: {
-              increment: difficulty === 'easy' ? 10 : 5
+          upsert: {
+            create: {
+              lastActivity: now,
+              xp: difficulty === 'easy' ? 10 : 5,
+              streakDays: 1
+            },
+            update: {
+              lastActivity: now,
+              xp: {
+                increment: difficulty === 'easy' ? 10 : 5
+              }
             }
           }
         }
@@ -351,14 +355,23 @@ export class FlashcardService {
       where: { id: deckId },
       include: {
         cards: true,
-        progress: true
+        progress: {
+          where: { userId }
+        }
       }
     });
 
     if (deck) {
       const totalCards = deck.cards.length;
       const studiedCards = new Set(deck.progress.map(p => p.cardId)).size;
+      const correctAnswers = deck.progress.filter(p => p.difficulty === 'easy').length;
       
+      console.log('Estatísticas do deck:', {
+        totalCards,
+        studiedCards,
+        correctAnswers
+      });
+
       if (studiedCards === totalCards) {
         // Todos os cards foram estudados, definir próxima revisão
         const nextReview = new Date();
@@ -377,9 +390,13 @@ export class FlashcardService {
     // Calcular e retornar o streak atualizado
     const streakDays = await calculateStreak(userId);
 
+    // Retornar dados completos do progresso
     return {
       ...progress,
-      streakDays
+      streakDays,
+      totalCards: deck?.cards.length || 0,
+      completedCards: deck?.progress.length || 0,
+      correctAnswers: deck?.progress.filter(p => p.difficulty === 'easy').length || 0
     };
   }
 } 

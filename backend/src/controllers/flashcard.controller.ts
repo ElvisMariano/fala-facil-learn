@@ -119,11 +119,21 @@ export class FlashcardController {
     try {
       const { id: deckId } = req.params;
       const { cardId, difficulty } = req.body;
-      const userId = req.user?.id; // Assumindo que o ID do usuário está disponível através do middleware de autenticação
+      const userId = req.user?.id;
 
       if (!userId) {
-        return res.status(401).json({ status: 'error', message: 'User not authenticated' });
+        return res.status(401).json({ 
+          status: 'error', 
+          message: 'User not authenticated' 
+        });
       }
+
+      console.log('Atualizando progresso:', {
+        userId,
+        deckId,
+        cardId,
+        difficulty
+      });
 
       const progress = await this.flashcardService.updateProgress(
         Number(userId),
@@ -131,6 +141,8 @@ export class FlashcardController {
         Number(cardId),
         difficulty
       );
+
+      console.log('Progresso atualizado:', progress);
 
       return res.json({
         status: 'success',
@@ -144,10 +156,17 @@ export class FlashcardController {
         }
       });
     } catch (error) {
+      console.error('Erro ao atualizar progresso:', error);
       if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ status: 'error', message: error.message });
+        return res.status(error.statusCode).json({ 
+          status: 'error', 
+          message: error.message 
+        });
       }
-      return res.status(500).json({ status: 'error', message: 'Internal server error' });
+      return res.status(500).json({ 
+        status: 'error', 
+        message: 'Internal server error' 
+      });
     }
   };
 } 
