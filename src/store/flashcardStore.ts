@@ -9,13 +9,6 @@ type LevelProgress = Record<DeckLevel, {
   unlocked: boolean;
 }>;
 
-<<<<<<< HEAD
-interface FlashcardFilters {
-  search: string;
-  levels: string[];
-  categories: string[];
-  showCompleted: boolean;
-=======
 interface FlashcardProgress {
   userId: string;
   deckId: number;
@@ -23,18 +16,17 @@ interface FlashcardProgress {
   difficulty: string;
   lastStudiedAt: Date;
   studyCount: number;
->>>>>>> temp
 }
 
 interface FlashcardStore {
   decks: FlashcardDeck[];
   filteredDecks: FlashcardDeck[];
-  filters: FlashcardFilters;
+  filters: DeckFilters;
   currentLevel: DeckLevel;
   levelProgress: LevelProgress;
   deckProgress: Record<string, FlashcardProgress[]>;
   setDecks: (decks: FlashcardDeck[]) => void;
-  setFilters: (filters: Partial<FlashcardFilters>) => void;
+  setFilters: (filters: Partial<DeckFilters>) => void;
   fetchDecks: () => Promise<void>;
   updateDeckProgress: (deckId: string, progress: any) => void;
   sortDecks: (option: DeckSortOption) => void;
@@ -60,10 +52,11 @@ const LEVEL_REQUIREMENTS = {
   }
 };
 
-const defaultFilters: FlashcardFilters = {
-  search: '',
+const defaultFilters: DeckFilters = {
   levels: [],
   categories: [],
+  searchTerm: '',
+  sortBy: 'name',
   showCompleted: true
 };
 
@@ -76,18 +69,8 @@ export const useFlashcardStore = create<FlashcardStore>((set, get) => ({
     intermediate: { completed: 0, total: 0, unlocked: false },
     advanced: { completed: 0, total: 0, unlocked: false }
   },
-<<<<<<< HEAD
-  filters: defaultFilters,
-=======
   deckProgress: {},
-  filters: {
-    levels: [],
-    categories: [],
-    searchTerm: '',
-    sortBy: 'name',
-    showCompleted: true
-  },
->>>>>>> temp
+  filters: defaultFilters,
 
   setDecks: (newDecks) => {
     set({ decks: newDecks });
@@ -248,10 +231,10 @@ export const useFlashcardStore = create<FlashcardStore>((set, get) => ({
   }
 }));
 
-function filterDecks(decks: FlashcardDeck[], filters: FlashcardFilters): FlashcardDeck[] {
+function filterDecks(decks: FlashcardDeck[], filters: DeckFilters): FlashcardDeck[] {
   return decks.filter(deck => {
     // Filtrar por busca
-    if (filters.search && !deck.title.toLowerCase().includes(filters.search.toLowerCase())) {
+    if (filters.searchTerm && !deck.title.toLowerCase().includes(filters.searchTerm.toLowerCase())) {
       return false;
     }
 
