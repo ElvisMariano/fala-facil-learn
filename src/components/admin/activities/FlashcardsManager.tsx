@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
@@ -43,58 +44,6 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
       }
     },
   });
-  
-  // Mutação para criar um flashcard
-  const createMutation = useMutation({
-    mutationFn: (newFlashcard: any) => {
-      console.log("Criando novo flashcard:", newFlashcard);
-      return flashcardService.createDeck(newFlashcard);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-flashcards'] });
-      toast.success("Conjunto de flashcards criado com sucesso!");
-      setView("list");
-    },
-    onError: (error: any) => {
-      console.error("Erro ao criar flashcard:", error);
-      toast.error(`Erro ao criar flashcards: ${error.message || "Tente novamente mais tarde"}`);
-    }
-  });
-  
-  // Mutação para atualizar um flashcard
-  const updateMutation = useMutation({
-    mutationFn: (updatedFlashcard: any) => {
-      console.log("Atualizando flashcard:", updatedFlashcard);
-      return flashcardService.updateDeck(updatedFlashcard.id, updatedFlashcard);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-flashcards'] });
-      toast.success("Conjunto de flashcards atualizado com sucesso!");
-      setView("list");
-    },
-    onError: (error: any) => {
-      console.error("Erro ao atualizar flashcard:", error);
-      toast.error(`Erro ao atualizar flashcards: ${error.message || "Tente novamente mais tarde"}`);
-    }
-  });
-  
-  // Mutação para excluir um flashcard
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => {
-      console.log("Excluindo flashcard:", id);
-      return flashcardService.deleteDeck(id);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-flashcards'] });
-      toast.success("Conjunto de flashcards excluído com sucesso!");
-    },
-    onError: (error: any) => {
-      console.error("Erro ao excluir flashcard:", error);
-      toast.error(`Erro ao excluir flashcards: ${error.message || "Tente novamente mais tarde"}`);
-    }
-  });
-
-  console.log("Flashcards renderizados:", flashcards);
 
   // Filtrar flashcards baseado na busca e filtros
   const filteredFlashcards = flashcards.filter((flashcard: any) => 
@@ -104,65 +53,121 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
     (categoryFilter === "all" || flashcard.category === categoryFilter)
   );
 
+  // Handler para criar flashcards
   const handleCreateFlashcard = async (data: any) => {
     try {
       console.log('Iniciando criação do deck com dados:', data);
       
-      // Envia o deck e os cards em uma única requisição
-      const response = await flashcardService.createDeck({
+      // Formata os dados para o formato esperado pela API
+      const formattedData = {
         title: data.title,
         description: data.description,
         level: data.level,
         category: data.category,
         cards: data.cards.map((card: any) => ({
-          term: card.term,
-          definition: card.definition,
+          term: card.front,
+          definition: card.back,
           example: card.example || ''
         }))
-      });
-
+      };
+      
+      // Envia o deck e os cards para a API
+      const response = await flashcardService.createDeck(formattedData);
       console.log('Deck e cards criados:', response);
+      
+      // Notifica o usuário
       toast.success('Deck de flashcards criado com sucesso!');
       
-      // Atualiza a lista
-      refetch();
-      
-      // Fecha o modal
-      setIsCreateModalOpen(false);
-    } catch (error) {
+      // Atualiza a lista e volta para a visualização de lista
+      queryClient.invalidateQueries({ queryKey: ['admin-flashcards'] });
+      setView("list");
+    } catch (error: any) {
       console.error('Erro ao criar deck e cards:', error);
-      toast.error('Erro ao criar o deck de flashcards');
+      toast.error(`Erro ao criar o deck: ${error.message || 'Tente novamente mais tarde'}`);
     }
   };
 
-  const handleUpdateFlashcard = (data: any) => {
-    updateMutation.mutate(data);
-  };
-
-  const handleDeleteFlashcard = (id: string) => {
-    if (window.confirm("Tem certeza que deseja excluir este conjunto de flashcards?")) {
-      deleteMutation.mutate(id);
+  // Handler para atualizar flashcards
+  const handleUpdateFlashcard = async (data: any) => {
+    try {
+      console.log('Atualizando deck com dados:', data);
+      
+      if (!data.id) {
+        toast.error('ID do deck não fornecido para atualização');
+        return;
+      }
+      
+      // Formata os dados para o formato esperado pela API
+      const formattedData = {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        level: data.level,
+        category: data.category,
+      };
+      
+      // Atualiza o deck através da API
+      const response = await flashcardService.updateDeck(data.id, formattedData);
+      console.log('Deck atualizado:', response);
+      
+      // Atualiza os cards, um a um
+      for (const card of data.cards) {
+        if (card.id) {
+          // Se o card já existe, atualiza
+          await flashcardService.updateCard(data.id, card.id, {
+            front: card.front,
+            back: card.back,
+            example: card.example || ''
+          });
+        } else {
+          // Se é um novo card, adiciona
+          await flashcardService.addCard(data.id, {
+            front: card.front,
+            back: card.back,
+            example: card.example || ''
+          });
+        }
+      }
+      
+      // Notifica o usuário
+      toast.success('Deck de flashcards atualizado com sucesso!');
+      
+      // Atualiza a lista e volta para a visualização de lista
+      queryClient.invalidateQueries({ queryKey: ['admin-flashcards'] });
+      setView("list");
+    } catch (error: any) {
+      console.error('Erro ao atualizar deck:', error);
+      toast.error(`Erro ao atualizar o deck: ${error.message || 'Tente novamente mais tarde'}`);
     }
   };
 
+  // Handler para deletar flashcards
+  const handleDeleteFlashcard = async (id: string) => {
+    if (!window.confirm("Tem certeza que deseja excluir este conjunto de flashcards?")) {
+      return;
+    }
+    
+    try {
+      console.log('Excluindo deck:', id);
+      await flashcardService.deleteDeck(id);
+      toast.success("Conjunto de flashcards excluído com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['admin-flashcards'] });
+    } catch (error: any) {
+      console.error('Erro ao excluir deck:', error);
+      toast.error(`Erro ao excluir flashcards: ${error.message || "Tente novamente mais tarde"}`);
+    }
+  };
+
+  // Handler para editar flashcards
   const handleEditFlashcard = (flashcard: any) => {
     console.log("Editando flashcard:", flashcard);
+    
     // Busca os detalhes completos do flashcard selecionado, incluindo os cards
     flashcardService.getDeckById(flashcard.id)
       .then(response => {
         console.log("Detalhes do flashcard:", response);
         if (response.deck) {
-          // Formata os dados para o formulário
-          const formattedData = {
-            ...response.deck,
-            cards: response.deck.cards.map((card: any) => ({
-              term: card.term || card.front,
-              definition: card.definition || card.back,
-              example: card.example || "",
-            }))
-          };
-          console.log("Dados formatados para edição:", formattedData);
-          setSelectedFlashcard(formattedData);
+          setSelectedFlashcard(response.deck);
           setView("edit");
         } else {
           toast.error("Deck não encontrado");
@@ -173,6 +178,29 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
         toast.error("Erro ao carregar detalhes do flashcard. Tente novamente.");
       });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
+        <h3 className="text-lg font-medium mb-2">Erro ao carregar flashcards</h3>
+        <p className="text-muted-foreground mb-4">
+          Não foi possível carregar os conjuntos de flashcards. Tente novamente mais tarde.
+        </p>
+        <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-flashcards'] })}>
+          Tentar Novamente
+        </Button>
+      </div>
+    );
+  }
 
   if (view === "create") {
     return (
@@ -207,29 +235,6 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
           onSubmit={handleUpdateFlashcard}
           onCancel={() => setView("list")}
         />
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-8">
-        <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
-        <h3 className="text-lg font-medium mb-2">Erro ao carregar flashcards</h3>
-        <p className="text-muted-foreground mb-4">
-          Não foi possível carregar os conjuntos de flashcards. Tente novamente mais tarde.
-        </p>
-        <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-flashcards'] })}>
-          Tentar Novamente
-        </Button>
       </div>
     );
   }

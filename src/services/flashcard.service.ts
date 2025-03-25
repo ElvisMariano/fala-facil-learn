@@ -1,18 +1,29 @@
+
 import api from '../lib/api';
 
 export const flashcardService = {
   // Obter todos os conjuntos de flashcards
   getAllDecks: async () => {
     console.log('Buscando todos os flashcards');
-    const response = await api.get('/flashcards');
-    return response.data;
+    try {
+      const response = await api.get('/flashcards');
+      return response.data;
+    } catch (error) {
+      console.error('Erro ao buscar todos os flashcards:', error);
+      throw error;
+    }
   },
 
   // Obter um conjunto de flashcards específico pelo ID
   getDeckById: async (id: string) => {
     console.log(`Buscando flashcard ${id}`);
-    const response = await api.get(`/flashcards/${id}`);
-    return response.data;
+    try {
+      const response = await api.get(`/flashcards/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Erro ao buscar flashcard ${id}:`, error);
+      throw error;
+    }
   },
 
   // Criar um novo conjunto de flashcards
@@ -36,7 +47,7 @@ export const flashcardService = {
       console.log('Resposta da atualização do deck:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Erro ao atualizar deck:', error);
+      console.error(`Erro ao atualizar deck ${id}:`, error);
       throw error;
     }
   },
@@ -49,62 +60,62 @@ export const flashcardService = {
       console.log('Resposta da exclusão do deck:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Erro ao excluir deck:', error);
+      console.error(`Erro ao excluir deck ${id}:`, error);
       throw error;
     }
   },
 
   // Adicionar um card a um conjunto
-  addCard: async (id: string, cardData: any) => {
-    console.log(`Adicionando card ao deck ${id}:`, cardData);
+  addCard: async (deckId: string, cardData: any) => {
+    console.log(`Adicionando card ao deck ${deckId}:`, cardData);
     try {
-      const response = await api.post(`/flashcards/${id}/cards`, cardData);
+      const response = await api.post(`/flashcards/${deckId}/cards`, cardData);
       console.log('Resposta da adição do card:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Erro ao adicionar card:', error);
+      console.error(`Erro ao adicionar card ao deck ${deckId}:`, error);
       throw error;
     }
   },
 
   // Atualizar um card
-  updateCard: async (id: string, cardId: string, cardData: any) => {
-    console.log(`Atualizando card ${cardId} do deck ${id}:`, cardData);
+  updateCard: async (deckId: string, cardId: string, cardData: any) => {
+    console.log(`Atualizando card ${cardId} do deck ${deckId}:`, cardData);
     try {
-      const response = await api.put(`/flashcards/${id}/cards/${cardId}`, cardData);
+      const response = await api.put(`/flashcards/${deckId}/cards/${cardId}`, cardData);
       console.log('Resposta da atualização do card:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Erro ao atualizar card:', error);
+      console.error(`Erro ao atualizar card ${cardId} do deck ${deckId}:`, error);
       throw error;
     }
   },
 
   // Excluir um card
-  deleteCard: async (id: string, cardId: string) => {
-    console.log(`Excluindo card ${cardId} do deck ${id}`);
+  deleteCard: async (deckId: string, cardId: string) => {
+    console.log(`Excluindo card ${cardId} do deck ${deckId}`);
     try {
-      const response = await api.delete(`/flashcards/${id}/cards/${cardId}`);
+      const response = await api.delete(`/flashcards/${deckId}/cards/${cardId}`);
       console.log('Resposta da exclusão do card:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Erro ao excluir card:', error);
+      console.error(`Erro ao excluir card ${cardId} do deck ${deckId}:`, error);
       throw error;
     }
   },
 
   // Registrar progresso de estudo
-  updateProgress: async (id: string, cardId: string, difficulty: string) => {
-    console.log(`Atualizando progresso para deck ${id}, card ${cardId}, dificuldade: ${difficulty}`);
+  updateProgress: async (deckId: string, cardId: string, difficulty: string) => {
+    console.log(`Atualizando progresso para deck ${deckId}, card ${cardId}, dificuldade: ${difficulty}`);
     try {
-      const response = await api.post(`/flashcards/${id}/progress`, {
+      const response = await api.post(`/flashcards/${deckId}/progress`, {
         cardId,
         difficulty
       });
       console.log('Resposta da atualização de progresso:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Erro ao atualizar progresso:', error);
+      console.error(`Erro ao atualizar progresso para deck ${deckId}, card ${cardId}:`, error);
       throw error;
     }
   },
@@ -117,7 +128,7 @@ export const flashcardService = {
       console.log('Resposta do progresso do usuário:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Erro ao buscar progresso:', error);
+      console.error('Erro ao buscar progresso do usuário:', error);
       throw error;
     }
   }

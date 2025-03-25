@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
@@ -9,13 +10,12 @@ import { toast } from "sonner";
 
 // Schema de validação
 const cardSchema = z.object({
-  term: z.string().min(1, "O termo é obrigatório"),
-  definition: z.string().min(1, "A definição é obrigatória"),
+  front: z.string().min(1, "O termo é obrigatório"),
+  back: z.string().min(1, "A definição é obrigatória"),
   example: z.string().optional(),
 });
 
 const flashcardSchema = z.object({
-  id: z.string().optional(),
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
   description: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres"),
   level: z.string().min(1, "O nível é obrigatório"),
@@ -23,10 +23,12 @@ const flashcardSchema = z.object({
   cards: z.array(cardSchema).min(1, "Adicione pelo menos um card"),
 });
 
-type FlashcardFormData = z.infer<typeof flashcardSchema>;
+type FlashcardFormData = z.infer<typeof flashcardSchema> & {
+  id?: string;
+};
 
 interface FlashcardFormProps {
-  initialData?: FlashcardFormData;
+  initialData?: any;
   onSubmit: (data: FlashcardFormData) => void;
   onCancel: () => void;
 }
@@ -46,7 +48,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
       description: "",
       level: "beginner",
       category: "vocabulary",
-      cards: [{ term: "", definition: "", example: "" }],
+      cards: [{ front: "", back: "", example: "" }],
     },
   });
   
@@ -61,17 +63,18 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
     if (initialData) {
       console.log("Carregando dados iniciais no formulário:", initialData);
       const formattedData = {
+        id: initialData.id || undefined,
         title: initialData.title || "",
         description: initialData.description || "",
         level: initialData.level || "beginner",
         category: initialData.category || "vocabulary",
         cards: initialData.cards?.length > 0 
           ? initialData.cards.map((card: any) => ({
-              term: card.term || card.front || "",
-              definition: card.definition || card.back || "",
+              front: card.front || "",
+              back: card.back || "",
               example: card.example || "",
             }))
-          : [{ term: "", definition: "", example: "" }],
+          : [{ front: "", back: "", example: "" }],
       };
       
       reset(formattedData);
@@ -80,7 +83,7 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
   
   // Função para adicionar um novo card vazio
   const addCard = () => {
-    append({ term: "", definition: "", example: "" });
+    append({ front: "", back: "", example: "" });
   };
   
   // Handler do envio do formulário
@@ -259,9 +262,9 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
                           />
                         )}
                       />
-                      {errors.cards?.[index]?.term && (
+                      {errors.cards?.[index]?.front && (
                         <p className="text-sm text-red-500">
-                          {errors.cards[index]?.term?.message}
+                          {errors.cards[index]?.front?.message}
                         </p>
                       )}
                     </div>
@@ -283,9 +286,9 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
                           />
                         )}
                       />
-                      {errors.cards?.[index]?.definition && (
+                      {errors.cards?.[index]?.back && (
                         <p className="text-sm text-red-500">
-                          {errors.cards[index]?.definition?.message}
+                          {errors.cards[index]?.back?.message}
                         </p>
                       )}
                     </div>
