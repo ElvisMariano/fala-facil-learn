@@ -25,10 +25,11 @@ model User {
   deletedAt     DateTime?
 
   // Relações
-  progress      Progress[]
-  achievements  UserAchievement[]
-  forumPosts    ForumPost[]
-  forumReplies  ForumReply[]
+  progress              Progress[]
+  achievements          UserAchievement[]
+  forumPosts            ForumPost[]
+  forumReplies          ForumReply[]
+  flashcardProgress     FlashcardProgress[]
 
   @@map("users")
 }
@@ -144,6 +145,62 @@ model ForumReply {
   user        User       @relation(fields: [userId], references: [id])
 
   @@map("forum_replies")
+}
+
+// Modelo para conjunto de flashcards
+model FlashcardDeck {
+  id          Int          @id @default(autoincrement())
+  title       String
+  description String
+  level       String       // beginner, intermediate, advanced
+  category    String?      // vocabulary, phrases, idioms, grammar
+  published   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relações
+  cards       Flashcard[]
+  progress    FlashcardProgress[]
+
+  @@map("flashcard_decks")
+}
+
+// Modelo para flashcards individuais
+model Flashcard {
+  id          Int          @id @default(autoincrement())
+  front       String       // Palavra ou frase na frente do cartão
+  back        String       // Tradução ou explicação no verso do cartão
+  example     String?      // Exemplo de uso (opcional)
+  deckId      Int          // Deck ao qual este card pertence
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relações
+  deck        FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  progress    FlashcardProgress[]
+
+  @@map("flashcards")
+}
+
+// Modelo para progresso de estudo de flashcards
+model FlashcardProgress {
+  id            Int       @id @default(autoincrement())
+  userId        String    // ID do usuário
+  deckId        Int       // ID do deck
+  cardId        Int       // ID do card específico
+  difficulty    String    // easy, medium, hard
+  lastStudiedAt DateTime  @default(now())
+  studyCount    Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relações
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deck          FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  card          Flashcard     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deckId, cardId])
+  @@map("flashcard_progress")
 }
 
 enum UserRole {

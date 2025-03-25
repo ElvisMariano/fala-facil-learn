@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
@@ -105,7 +104,19 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
   );
 
   const handleCreateFlashcard = (data: any) => {
-    createMutation.mutate(data);
+    // Formatar os dados para o formato esperado pelo backend
+    const formattedData = {
+      title: data.title,
+      description: data.description,
+      level: data.level,
+      category: data.category,
+      cards: data.cards.map((card: any) => ({
+        front: card.term,
+        back: card.definition,
+        example: card.example || "",
+      }))
+    };
+    createMutation.mutate(formattedData);
   };
 
   const handleUpdateFlashcard = (data: any) => {

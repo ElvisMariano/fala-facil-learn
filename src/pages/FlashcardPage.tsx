@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
@@ -407,9 +406,13 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
               {/* Card front */}
               <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-white border border-muted ${isFlipped ? 'opacity-0' : 'opacity-100'}`}>
                 <div className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary mb-4">
-                  Nível {currentCard.level}
+                  Nível {deckInfo.level}
                 </div>
                 <p className="text-4xl font-display font-bold mb-4">{currentCard.front}</p>
+                <div className="w-full max-w-xs p-4 rounded-lg bg-black/10 text-center mb-6">
+                   
+                  <p className="text-sm text-muted-foreground italic">Pronúncia: "{currentCard.example}"</p>
+                </div>
                 <p className="text-sm text-muted-foreground mb-6">Clique para virar</p>
                 <div className="flex gap-2">
                   <Button 
@@ -442,6 +445,9 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
               {/* Card back */}
               <div className={`absolute inset-0 backface-hidden rounded-xl shadow-lg p-8 flex flex-col items-center justify-center bg-primary/5 border border-primary/20 ${isFlipped ? 'opacity-100' : 'opacity-0'}`} style={{ transform: 'rotateY(180deg)' }}>
                 <div style={{ transform: 'rotateY(180deg)' }} className="w-full h-full flex flex-col items-center justify-center">
+                <div className="text-sm font-medium px-5 py-1 rounded-full bg-primary/10 text-primary mb-4">
+                  Tradução
+                </div>
                   <p className="text-4xl font-display font-bold mb-6">{currentCard.back}</p>
                   <div className="w-full max-w-xs p-4 rounded-lg bg-white text-center mb-6">
                     <p className="text-sm text-muted-foreground italic">"{currentCard.example}"</p>
@@ -453,7 +459,7 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
                       className="flex items-center gap-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePlayAudio(currentCard.back);
+                        handlePlayAudio(currentCard.front);
                       }}
                     >
                       <Volume2 className="h-4 w-4" />
@@ -465,7 +471,7 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
                       className="flex items-center gap-2"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePlayAudio(currentCard.back, true);
+                        handlePlayAudio(currentCard.front, true);
                       }}
                     >
                       <VolumeX className="h-4 w-4" />
@@ -554,18 +560,28 @@ const FlashcardStudy = ({ onBackToDeck, deckId }: { onBackToDeck: () => void, de
 const FlashcardPage = () => {
   const [activeView, setActiveView] = useState("decks"); // "decks" or "study"
   const [activeDeckId, setActiveDeckId] = useState("");
+  const queryClient = useQueryClient();
   
   const handleStartStudy = (deckId: string) => {
-    const queryClient = useQueryClient();
     const decks = queryClient.getQueryData<{flashcards: FlashcardDeck[]}>(['flashcardDecks']);
     const deck = decks?.flashcards.find(d => d.id === deckId);
     
-    if (deck && !deck.availableForReview) {
+    if (!deck) {
+      toast.error("Deck não encontrado.");
+      return;
+    }
+
+    if (deck.cardCount === 0) {
+      toast.error("Este deck não possui cartões para estudo.");
+      return;
+    }
+    
+    if (!deck.availableForReview) {
       toast.info(`Este deck não está disponível para estudo no momento. Próxima revisão: ${new Date(deck.nextReview).toLocaleDateString('pt-BR')}`);
       return;
     }
     
-    if (deck && deck.locked) {
+    if (deck.locked) {
       toast.error("Este deck está bloqueado. Complete os níveis anteriores para desbloqueá-lo.");
       return;
     }

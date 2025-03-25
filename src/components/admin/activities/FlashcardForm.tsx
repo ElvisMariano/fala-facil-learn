@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
@@ -16,6 +15,7 @@ const cardSchema = z.object({
 });
 
 const flashcardSchema = z.object({
+  id: z.string().optional(),
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres"),
   description: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres"),
   level: z.string().min(1, "O nível é obrigatório"),
@@ -26,7 +26,7 @@ const flashcardSchema = z.object({
 type FlashcardFormData = z.infer<typeof flashcardSchema>;
 
 interface FlashcardFormProps {
-  initialData?: any;
+  initialData?: FlashcardFormData;
   onSubmit: (data: FlashcardFormData) => void;
   onCancel: () => void;
 }
@@ -214,138 +214,123 @@ const FlashcardForm: React.FC<FlashcardFormProps> = ({
               <Button 
                 type="button" 
                 variant="outline" 
-                size="sm" 
+                size="sm"
                 onClick={addCard}
+                className="flex items-center gap-2"
               >
-                <Plus className="h-4 w-4 mr-1" />
+                <Plus className="h-4 w-4" />
                 Adicionar Card
               </Button>
             </div>
             
-            {errors.cards && !Array.isArray(errors.cards) && (
-              <p className="text-sm text-red-500">{errors.cards.message}</p>
-            )}
-            
             <div className="space-y-4">
               {fields.map((field, index) => (
-                <Card key={field.id} className="border border-muted">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="font-medium">Card #{index + 1}</h4>
-                      <button
+                <div key={field.id} className="p-4 border rounded-md bg-muted/20">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-medium">Card {index + 1}</h4>
+                    {fields.length > 1 && (
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => remove(index)}
-                        className="text-muted-foreground hover:text-destructive"
-                        disabled={fields.length === 1}
+                        className="text-destructive"
                       >
                         <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Frente do card */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium">
-                          Frente (Term)
-                        </label>
-                        <Controller
-                          name={`cards.${index}.front`}
-                          control={control}
-                          render={({ field }) => (
-                            <input
-                              {...field}
-                              type="text"
-                              className="w-full p-2 border rounded-md"
-                              placeholder="Ex: Hello"
-                            />
-                          )}
-                        />
-                        {errors.cards?.[index]?.front && (
-                          <p className="text-sm text-red-500">
-                            {errors.cards[index]?.front?.message}
-                          </p>
-                        )}
-                      </div>
-                      
-                      {/* Verso do card */}
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium">
-                          Verso (Definição)
-                        </label>
-                        <Controller
-                          name={`cards.${index}.back`}
-                          control={control}
-                          render={({ field }) => (
-                            <input
-                              {...field}
-                              type="text"
-                              className="w-full p-2 border rounded-md"
-                              placeholder="Ex: Olá"
-                            />
-                          )}
-                        />
-                        {errors.cards?.[index]?.back && (
-                          <p className="text-sm text-red-500">
-                            {errors.cards[index]?.back?.message}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Exemplo (opcional) */}
-                    <div className="mt-3 space-y-2">
-                      <label className="block text-sm font-medium">
-                        Exemplo (opcional)
+                      </Button>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Frente do card */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Termo (Frente)
                       </label>
                       <Controller
-                        name={`cards.${index}.example`}
+                        name={`cards.${index}.front`}
                         control={control}
                         render={({ field }) => (
                           <input
                             {...field}
                             type="text"
                             className="w-full p-2 border rounded-md"
-                            placeholder="Ex: Hello, how are you?"
+                            placeholder="Ex: Hello"
                           />
                         )}
                       />
+                      {errors.cards?.[index]?.front && (
+                        <p className="text-sm text-red-500">
+                          {errors.cards[index]?.front?.message}
+                        </p>
+                      )}
                     </div>
-                  </CardContent>
-                </Card>
+                    
+                    {/* Verso do card */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Definição (Verso)
+                      </label>
+                      <Controller
+                        name={`cards.${index}.back`}
+                        control={control}
+                        render={({ field }) => (
+                          <input
+                            {...field}
+                            type="text"
+                            className="w-full p-2 border rounded-md"
+                            placeholder="Ex: Olá"
+                          />
+                        )}
+                      />
+                      {errors.cards?.[index]?.back && (
+                        <p className="text-sm text-red-500">
+                          {errors.cards[index]?.back?.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Exemplo */}
+                  <div className="mt-4 space-y-2">
+                    <label className="text-sm font-medium">
+                      Exemplo (opcional)
+                    </label>
+                    <Controller
+                      name={`cards.${index}.example`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          className="w-full p-2 border rounded-md"
+                          placeholder="Ex: Hello, how are you?"
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
-            
-            {fields.length === 0 && (
-              <p className="text-center py-4 bg-muted/20 rounded-lg">
-                Adicione cards ao conjunto
-              </p>
-            )}
           </div>
           
           {/* Botões de ação */}
-          <div className="flex justify-end space-x-3">
-            <Button 
-              type="button" 
-              variant="outline" 
+          <div className="flex justify-end gap-4">
+            <Button
+              type="button"
+              variant="outline"
               onClick={onCancel}
+              disabled={isSubmitting}
             >
               Cancelar
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isSubmitting}
+              className="flex items-center gap-2"
             >
-              {isSubmitting ? (
-                <span className="flex items-center">
-                  <div className="animate-spin mr-2 h-4 w-4 border-t-2 border-b-2 border-white rounded-full" />
-                  Processando...
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  <Save className="h-4 w-4 mr-2" />
-                  {initialData ? "Atualizar" : "Criar"} Flashcards
-                </span>
-              )}
+              <Save className="h-4 w-4" />
+              {isSubmitting ? "Salvando..." : "Salvar"}
             </Button>
           </div>
         </form>
