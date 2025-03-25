@@ -7,6 +7,7 @@ export const flashcardService = {
     console.log('Buscando todos os flashcards');
     try {
       const response = await api.get('/flashcards');
+      console.log('Resposta da API (getAllDecks):', response.data);
       return response.data;
     } catch (error) {
       console.error('Erro ao buscar todos os flashcards:', error);
@@ -19,6 +20,7 @@ export const flashcardService = {
     console.log(`Buscando flashcard ${id}`);
     try {
       const response = await api.get(`/flashcards/${id}`);
+      console.log(`Resposta da API (getDeckById - ${id}):`, response.data);
       return response.data;
     } catch (error) {
       console.error(`Erro ao buscar flashcard ${id}:`, error);

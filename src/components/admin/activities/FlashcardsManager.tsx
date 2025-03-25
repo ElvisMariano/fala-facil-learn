@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/custom/Card";
 import { Button } from "@/components/ui/custom/Button";
@@ -20,13 +21,12 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
   const [selectedFlashcard, setSelectedFlashcard] = useState<any>(null);
   const [levelFilter, setLevelFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   
   const queryClient = useQueryClient();
   
   // Query para buscar flashcards
   const { 
-    data: { flashcards = [] } = {}, 
+    data, 
     isLoading, 
     error,
     refetch
@@ -44,6 +44,12 @@ const FlashcardsManager: React.FC<FlashcardsManagerProps> = ({
     },
   });
 
+  // Extrair flashcards dos dados
+  const flashcards = data?.flashcards || [];
+  
+  console.log("Dados recebidos:", data);
+  console.log("Flashcards para exibição:", flashcards);
+  
   // Filtrar flashcards baseado na busca e filtros
   const filteredFlashcards = flashcards.filter((flashcard: any) => 
     (flashcard.title?.toLowerCase().includes(searchTerm.toLowerCase()) || 
